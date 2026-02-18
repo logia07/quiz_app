@@ -1,20 +1,26 @@
 import os
 from fastapi import FastAPI, Request, Query
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, StreamingResponse
+from fastapi.responses import FileResponse, StreamingResponse, JSONResponse
 from database import init_db, save_participant, get_all_participants
 from PIL import Image, ImageDraw, ImageFont
 import io
 import json
 import requests
 import csv
+import uuid
+from datetime import datetime, timedelta
 
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 VK_APP_ID = "54435997"
 TELEGRAM_BOT_NAME = "Sloboda8Marta_bot"
 
 STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
+RESULTS_DIR = os.path.join(STATIC_DIR, "results")
 TEMPLATE_PATH = os.path.join(STATIC_DIR, "full_template.jpg")
+
+# 🔴 СОЗДАЁМ ПАПКУ ДЛЯ РЕЗУЛЬТАТОВ
+os.makedirs(RESULTS_DIR, exist_ok=True)
 
 init_db()
 app = FastAPI()
@@ -37,24 +43,12 @@ def root():
 
 
 def smart_split(text: str, max_first_line=33):
-    """
-    Исправленная функция: делит текст на 2 строки по символам.
-    Если в 1 строке 30+ символов, то во 2 можно до 40 символов.
-    Иначе во 2 строке максимум 33 символа.
-    """
     if not text:
         return "", ""
 
-    # Первая строка: максимум max_first_line символов
     line1 = text[:max_first_line]
-
-    # Остаток для второй строки
     remaining = text[max_first_line:]
-
-    # Если в 1 строке 30+ символов, то во 2 можно 40, иначе 33
     max_line2 = 40 if len(line1) >= 30 else 33
-
-    # Вторая строка: максимум max_line2 символов
     line2 = remaining[:max_line2]
 
     return line1, line2
@@ -95,7 +89,7 @@ async def generate_result(request: Request):
     fields = ['name', 'city', 'dream', 'age', 'hobby', 'goal', 'quote', 'extra']
 
     for field in fields:
-        text = str(answers.get(field, "")).strip()[:70]  # ← ИСПРАВЛЕНО: 70 вместо 76
+        text = str(answers.get(field, "")).strip()[:70]
         if not text:
             continue
         line1, line2 = smart_split(text, max_first_line=33)
@@ -104,6 +98,17 @@ async def generate_result(request: Request):
         if line2:
             draw.text((164, y1 + 68), line2, fill=(85, 85, 85), font=font)
 
+    # 🔴 СОХРАНЯЕМ КАРТИНКУ НА ДИСК
+    unique_id = f"{user_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:8]}"
+    filename = f"result_{unique_id}.jpg"
+    filepath = os.path.join(RESULTS_DIR, filename)
+
+    img.save(filepath, 'JPEG', quality=95)
+
+    # 🔴 ПУБЛИЧНЫЙ URL ДЛЯ VK
+    public_url = f"/static/results/{filename}"
+
+    # Возвращаем картинку + URL
     img_io = io.BytesIO()
     img.save(img_io, 'JPEG', quality=95)
     img_io.seek(0)
@@ -111,33 +116,10 @@ async def generate_result(request: Request):
 
     # 🔴 TELEGRAM: Отправляем картинку в чат с ботом
     if platform == "telegram" and user_id and TELEGRAM_BOT_TOKEN:
-        caption = (
-            "✨ Ваш персонализированный результат!\n\n"
-            "Хочешь такой же? Пройди анкету прямо сейчас 👇\n"
-            f"https://t.me/{TELEGRAM_BOT_NAME}?start"
-        )
+        caption = "Результат уже в чате с ботом! Поделись с подружками и участвуй в розыгрыше призов!"
 
-        # Отправляем фото с inline keyboard для шеринга
         url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendPhoto"
-
-        # Inline keyboard с кнопкой "Поделиться"
-        keyboard = {
-            "inline_keyboard": [
-                [
-                    {
-                        "text": "📤 Поделиться с подружками",
-                        "switch_inline_query": "✨ Мой результат из анкеты Слобода! Пройди тоже 👇"
-                    }
-                ]
-            ]
-        }
-
-        payload = {
-            "chat_id": user_id,
-            "caption": caption,
-            "reply_markup": json.dumps(keyboard)
-        }
-
+        payload = {"chat_id": user_id, "caption": caption}
         files = {"photo": ("result.jpg", io.BytesIO(img_bytes), "image/jpeg")}
 
         try:
@@ -149,7 +131,103 @@ async def generate_result(request: Request):
         except Exception as e:
             print(f"❌ Telegram send error: {e}")
 
-    return StreamingResponse(io.BytesIO(img_bytes), media_type="image/jpeg")
+    # 🔴 ВОЗВРАЩАЕМ URL ВМЕСТЕ С КАРТИНКОЙ
+    response = StreamingResponse(io.BytesIO(img_bytes), media_type="image/jpeg")
+    response.headers["X-Result-URL"] = public_url
+    return response
+
+
+# 🔴 НОВЫЙ ЭНДПОИНТ — ОЧИСТКА СТАРЫХ ФАЙЛОВ
+@app.post("/admin/cleanup")
+def cleanup_old_results(password: str = Query(...), days: int = 2):
+    """
+    Удаляет файлы результатов старше указанного количества дней.
+
+    Параметры:
+    - password: пароль администратора
+    - days: сколько дней хранить файлы (по умолчанию 2)
+
+    Пример:
+    POST /admin/cleanup?password=radar1786&days=2
+    """
+    if password != "radar1786":
+        return JSONResponse(status_code=403, content={"error": "Access denied"})
+
+    cutoff = datetime.now() - timedelta(days=days)
+    deleted = 0
+    total_size = 0
+
+    try:
+        for filename in os.listdir(RESULTS_DIR):
+            filepath = os.path.join(RESULTS_DIR, filename)
+
+            # Пропускаем папки
+            if os.path.isdir(filepath):
+                continue
+
+            file_mtime = datetime.fromtimestamp(os.path.getmtime(filepath))
+
+            if file_mtime < cutoff:
+                file_size = os.path.getsize(filepath)
+                os.remove(filepath)
+                deleted += 1
+                total_size += file_size
+                print(f"🗑️ Deleted: {filename} ({file_size / 1024 / 1024:.2f} MB)")
+
+        return {
+            "success": True,
+            "deleted": deleted,
+            "freed_space_mb": round(total_size / 1024 / 1024, 2),
+            "days": days,
+            "cutoff_date": cutoff.isoformat()
+        }
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": str(e)})
+
+
+# 🔴 НОВЫЙ ЭНДПОИНТ — СТАТИСТИКА ПО ДИСКУ
+@app.get("/admin/disk-usage")
+def disk_usage(password: str = Query(...)):
+    """
+    Показывает статистику использования диска файлами результатов.
+
+    Пример:
+    GET /admin/disk-usage?password=radar1786
+    """
+    if password != "radar1786":
+        return JSONResponse(status_code=403, content={"error": "Access denied"})
+
+    total_files = 0
+    total_size = 0
+    oldest_file = None
+    newest_file = None
+
+    try:
+        for filename in os.listdir(RESULTS_DIR):
+            filepath = os.path.join(RESULTS_DIR, filename)
+
+            if os.path.isdir(filepath):
+                continue
+
+            total_files += 1
+            file_size = os.path.getsize(filepath)
+            total_size += file_size
+            file_mtime = datetime.fromtimestamp(os.path.getmtime(filepath))
+
+            if oldest_file is None or file_mtime < oldest_file:
+                oldest_file = file_mtime
+            if newest_file is None or file_mtime > newest_file:
+                newest_file = file_mtime
+
+        return {
+            "total_files": total_files,
+            "total_size_mb": round(total_size / 1024 / 1024, 2),
+            "oldest_file": oldest_file.isoformat() if oldest_file else None,
+            "newest_file": newest_file.isoformat() if newest_file else None,
+            "results_dir": RESULTS_DIR
+        }
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": str(e)})
 
 
 @app.get("/admin/export")

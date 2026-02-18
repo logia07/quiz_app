@@ -78,7 +78,7 @@
       top: 38.8%;
       width: 69.4%;
       height: 134px;
-      padding: 0 10px 0 0px;
+      padding: 0 10px 0 5px;
       font-family: 'InputFont', cursive;
       font-size: clamp(12px, 3.5vmin, 35px);
       color: #555;
@@ -316,8 +316,9 @@
     let currentScreen = 'welcome';
     let userId = null;
     let platform = 'web';
+    let resultPublicUrl = null; /* ← 🔴 ХРАНИМ ПУБЛИЧНЫЙ URL */
     const TELEGRAM_BOT_NAME = "Sloboda8Marta_bot";
-    const MAX_LEN = 70; /* ← ИСПРАВЛЕНО: 70 вместо 76 */
+    const MAX_LEN = 70;
     const MAX_LINES = 2;
     const MAX_CHARS_LINE_1 = 33;
     const MAX_CHARS_LINE_2_IF_30_PLUS = 40;
@@ -363,7 +364,6 @@
       localStorage.removeItem(STORAGE_KEY);
     }
 
-    // === ИСПРАВЛЕННАЯ ФУНКЦИЯ — Enter работает 1 раз, 70 символов всего ===
     function setupInputLimit(div, counterId, maxLen = MAX_LEN) {
       div.addEventListener('keydown', (e) => {
         const isSpecialKey = ['Backspace','Delete','ArrowLeft','ArrowRight',
@@ -375,7 +375,6 @@
         const text = getText(div);
         const lines = countLines(text);
 
-        // Enter работает только 1 раз (перенос на 2 строку)
         if (e.key === 'Enter') {
           if (lines >= MAX_LINES) {
             e.preventDefault();
@@ -429,7 +428,6 @@
       });
     }
 
-    /* === АДАПТИВНЫЙ ШРИФТ + 5px ОТСТУП ДЛЯ 2 СТРОКИ === */
     function updateInputFontSizes() {
       const containers = document.querySelectorAll('.quiz-container, .prefull-container, .result-container');
       containers.forEach(container => {
@@ -468,12 +466,10 @@
       });
     }
 
-    /* === Вызывает масштабирование при смене экрана === */
     function show(screenId) {
       document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
       document.getElementById(screenId).classList.add('active');
       currentScreen = screenId;
-      setTimeout(updateInputFontSizes, 50);
     }
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -513,12 +509,6 @@
       show('welcome');
     });
 
-    function show(screenId) {
-      document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
-      document.getElementById(screenId).classList.add('active');
-      currentScreen = screenId;
-    }
-
     async function submitForm() {
       const btn = document.getElementById('prefull-btn');
       if (!btn) return;
@@ -549,6 +539,10 @@
         const blob = await res.blob();
         const url = URL.createObjectURL(blob);
         document.getElementById('result-img').src = url;
+
+        // 🔴 ПОЛУЧАЕМ ПУБЛИЧНЫЙ URL ИЗ ЗАГОЛОВКА
+        resultPublicUrl = res.headers.get('X-Result-URL');
+
         show('result-screen');
         clearAnswers();
       } catch (e) {
@@ -561,16 +555,20 @@
 
     function shareResult() {
       if (platform === 'telegram') {
-        // 🔴 TELEGRAM: Показываем сообщение, бот уже отправил картинку
         Telegram.WebApp.showAlert(
           "Результат уже в чате с ботом! Поделись с подружками и участвуй в розыгрыше призов!"
         );
       } else if (platform === 'vk') {
-        // 🔴 VK: Открываем окно поста на стене
+        // 🔴 ИСПОЛЬЗУЕМ ПУБЛИЧНЫЙ URL ВМЕСТО BLOB
+        const imageUrl = resultPublicUrl
+          ? window.location.origin + resultPublicUrl
+          : document.getElementById('result-img').src;
+
         const message = "Заполни анкету и участвуй в конкурсе!\nПройти прямо сейчас 👇\nhttps://vk.com/app54435997";
+
         vkBridge.send('VKWebAppShowWallPostBox', {
           message,
-          attachments: document.getElementById('result-img').src
+          attachments: imageUrl
         }).catch(console.error);
       }
     }
