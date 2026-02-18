@@ -3,25 +3,27 @@
 <head>
   <meta charset="utf-8">
   <title>Анкета</title>
-  <!-- ПРАВКА 1: добавлен viewport-fit=cover -->
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <script src="https://unpkg.com/@vkontakte/vk-bridge@2.12.0/dist/vk-bridge.umd.js"></script>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
+    html, body {
       font-family: sans-serif;
       background: #f9f9f9;
       overflow-x: hidden;
-      width: 100vw;
-      height: 100vh;
+      overflow-y: hidden;
+      width: 100%;
+      height: 100%;
+      position: fixed;
     }
     .screen {
       display: none;
       width: 100%;
       height: 100%;
+      min-height: -webkit-fill-available;
       overflow-y: auto;
-      /* ПРАВКА 2: добавлен padding для safe-area */
+      -webkit-overflow-scrolling: touch;
       padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom) 0;
     }
     .active { display: block; }
@@ -75,12 +77,10 @@
       left: 16.2%;
       top: 38.8%;
       width: 69.4%;
-      min-height: 60px;
-      max-height: 134px;
-      padding: 0 10px;
+      height: 134px;
+      padding: 0 10px 0 0px;
       font-family: 'InputFont', cursive;
-      /* ПРАВКА 3: адаптивный font-size через vmin */
-      font-size: clamp(14px, 3.5vmin, 35px);
+      font-size: clamp(12px, 3.5vmin, 35px);
       color: #555;
       text-align: left;
       border: none;
@@ -103,7 +103,6 @@
       top: 36.8%;
       right: 14.4%;
       font-family: 'SF Pro Text', sans-serif;
-      /* ПРАВКА 3: адаптивный font-size для счетчика */
       font-size: clamp(10px, 2vmin, 12px);
       color: rgba(51, 51, 51, 0.5);
       z-index: 16;
@@ -224,7 +223,7 @@
     <div class="quiz-container">
       <img src="/static/images/q1.jpg" class="illustration">
       <div id="name" class="input-field" contenteditable="true"></div>
-      <div class="char-counter" id="name-counter">0/76</div>
+      <div class="char-counter" id="name-counter">0/70</div>
       <button class="action-btn" id="q1-next">вперед</button>
     </div>
   </div>
@@ -233,7 +232,7 @@
     <div class="quiz-container">
       <img src="/static/images/q2.jpg" class="illustration">
       <div id="city" class="input-field" contenteditable="true"></div>
-      <div class="char-counter" id="city-counter">0/76</div>
+      <div class="char-counter" id="city-counter">0/70</div>
       <button class="action-btn" id="q2-prev">назад</button>
       <button class="action-btn" id="q2-next">вперед</button>
     </div>
@@ -243,7 +242,7 @@
     <div class="quiz-container">
       <img src="/static/images/q3.jpg" class="illustration">
       <div id="dream" class="input-field" contenteditable="true"></div>
-      <div class="char-counter" id="dream-counter">0/76</div>
+      <div class="char-counter" id="dream-counter">0/70</div>
       <button class="action-btn" id="q3-prev">назад</button>
       <button class="action-btn" id="q3-next">вперед</button>
     </div>
@@ -253,7 +252,7 @@
     <div class="quiz-container">
       <img src="/static/images/q4.jpg" class="illustration">
       <div id="age" class="input-field" contenteditable="true"></div>
-      <div class="char-counter" id="age-counter">0/76</div>
+      <div class="char-counter" id="age-counter">0/70</div>
       <button class="action-btn" id="q4-prev">назад</button>
       <button class="action-btn" id="q4-next">вперед</button>
     </div>
@@ -263,7 +262,7 @@
     <div class="quiz-container">
       <img src="/static/images/q5.jpg" class="illustration">
       <div id="hobby" class="input-field" contenteditable="true"></div>
-      <div class="char-counter" id="hobby-counter">0/76</div>
+      <div class="char-counter" id="hobby-counter">0/70</div>
       <button class="action-btn" id="q5-prev">назад</button>
       <button class="action-btn" id="q5-next">вперед</button>
     </div>
@@ -273,7 +272,7 @@
     <div class="quiz-container">
       <img src="/static/images/q6.jpg" class="illustration">
       <div id="goal" class="input-field" contenteditable="true"></div>
-      <div class="char-counter" id="goal-counter">0/76</div>
+      <div class="char-counter" id="goal-counter">0/70</div>
       <button class="action-btn" id="q6-prev">назад</button>
       <button class="action-btn" id="q6-next">вперед</button>
     </div>
@@ -283,7 +282,7 @@
     <div class="quiz-container">
       <img src="/static/images/q7.jpg" class="illustration">
       <div id="quote" class="input-field" contenteditable="true"></div>
-      <div class="char-counter" id="quote-counter">0/76</div>
+      <div class="char-counter" id="quote-counter">0/70</div>
       <button class="action-btn" id="q7-prev">назад</button>
       <button class="action-btn" id="q7-next">вперед</button>
     </div>
@@ -293,7 +292,7 @@
     <div class="quiz-container">
       <img src="/static/images/q8.jpg" class="illustration">
       <div id="extra" class="input-field" contenteditable="true"></div>
-      <div class="char-counter" id="extra-counter">0/76</div>
+      <div class="char-counter" id="extra-counter">0/70</div>
       <button class="action-btn" id="q8-prev">назад</button>
       <button class="action-btn" id="q8-next">вперед</button>
     </div>
@@ -318,7 +317,10 @@
     let userId = null;
     let platform = 'web';
     const TELEGRAM_BOT_NAME = "Sloboda8Marta_bot";
-    const MAX_LEN = 76;
+    const MAX_LEN = 70; /* ← ИЗМЕНЕНО с 66 на 70 */
+    const MAX_LINES = 2;
+    const MAX_CHARS_LINE_1 = 33;
+    const MAX_CHARS_LINE_2_IF_30_PLUS = 40; /* ← Если в 1 строке 30+, то во 2 можно 40 */
 
     if (window.location.search.includes('vk_app_id')) {
       platform = 'vk';
@@ -336,6 +338,7 @@
 
     function getText(el) { return el?.innerText || ''; }
     function setText(el, text) { if (el) el.innerText = text; }
+    function countLines(text) { return text.split('\n').length; }
 
     const STORAGE_KEY = 'quiz_answers_v15';
     function saveAnswer(field, value) {
@@ -360,6 +363,7 @@
       localStorage.removeItem(STORAGE_KEY);
     }
 
+    // === ИСПРАВЛЕННАЯ ФУНКЦИЯ — Enter работает 1 раз, 70 символов всего ===
     function setupInputLimit(div, counterId, maxLen = MAX_LEN) {
       div.addEventListener('keydown', (e) => {
         const isSpecialKey = ['Backspace','Delete','ArrowLeft','ArrowRight',
@@ -369,6 +373,18 @@
         if (isSpecialKey) return;
 
         const text = getText(div);
+        const lines = countLines(text);
+
+        // Enter работает только 1 раз (перенос на 2 строку)
+        if (e.key === 'Enter') {
+          if (lines >= MAX_LINES) {
+            e.preventDefault();
+            return false;
+          }
+          // Разрешаем Enter, если ещё нет 2 строк
+          return;
+        }
+
         if (text.length >= maxLen) {
           e.preventDefault();
           return false;
@@ -378,9 +394,35 @@
       div.addEventListener('input', () => {
         const text = getText(div);
         const counter = document.getElementById(counterId);
+        const lines = text.split('\n');
 
-        if (text.length > maxLen) {
-          const trimmed = text.slice(0, maxLen);
+        // Проверяем лимиты для каждой строки
+        if (lines.length >= 1 && lines[0].length > MAX_CHARS_LINE_1) {
+          lines[0] = lines[0].slice(0, MAX_CHARS_LINE_1);
+        }
+
+        // Если в 1 строке 30+ символов, то во 2 можно 40, иначе 33
+        const maxLine2 = lines.length > 0 && lines[0].length >= 30
+          ? MAX_CHARS_LINE_2_IF_30_PLUS
+          : MAX_CHARS_LINE_1;
+
+        if (lines.length >= 2 && lines[1].length > maxLine2) {
+          lines[1] = lines[1].slice(0, maxLine2);
+        }
+
+        // Обрезаем до 2 строк
+        if (lines.length > MAX_LINES) {
+          const trimmed = lines.slice(0, MAX_LINES).join('\n');
+          setText(div, trimmed);
+          if (counter) counter.textContent = `${trimmed.length}/${maxLen}`;
+          saveAnswer(div.id, trimmed);
+          return;
+        }
+
+        // Проверяем общий лимит 70
+        const joinedText = lines.join('\n');
+        if (joinedText.length > maxLen) {
+          const trimmed = joinedText.slice(0, maxLen);
           setText(div, trimmed);
           if (counter) counter.textContent = `${maxLen}/${maxLen}`;
           saveAnswer(div.id, trimmed);
@@ -392,23 +434,51 @@
       });
     }
 
-    /* ПРАВКА 4: Функция адаптации шрифтов через JS */
+    /* === АДАПТИВНЫЙ ШРИФТ + 5px ОТСТУП ДЛЯ 2 СТРОКИ === */
     function updateInputFontSizes() {
       const containers = document.querySelectorAll('.quiz-container, .prefull-container, .result-container');
       containers.forEach(container => {
         const containerWidth = container.offsetWidth;
         if (!containerWidth) return;
+
         const scaleFactor = containerWidth / 1080;
 
         container.querySelectorAll('.input-field').forEach(field => {
-          const newSize = 35 * scaleFactor;
-          field.style.fontSize = `${Math.max(14, Math.min(35, newSize))}px`;
+          const baseSize = 35;
+          const newSize = baseSize * scaleFactor;
+          const finalSize = Math.max(11, Math.min(35, newSize));
+          field.style.fontSize = `${finalSize}px`;
+
+          const additionalLineHeight = 5 / finalSize;
+          const finalLineHeight = 1.5 + additionalLineHeight;
+          field.style.lineHeight = `${finalLineHeight}`;
+
+          const paddingTop = 5 * scaleFactor;
+          field.style.paddingTop = `${paddingTop}px`;
         });
+
         container.querySelectorAll('.char-counter').forEach(counter => {
-          const newSize = 12 * scaleFactor;
-          counter.style.fontSize = `${Math.max(10, Math.min(12, newSize))}px`;
+          const baseSize = 12;
+          const newSize = baseSize * scaleFactor;
+          const finalSize = Math.max(9, Math.min(12, newSize));
+          counter.style.fontSize = `${finalSize}px`;
+        });
+
+        container.querySelectorAll('.action-btn').forEach(btn => {
+          const baseSize = 71;
+          const newSize = baseSize * scaleFactor;
+          const finalSize = Math.max(16, Math.min(71, newSize));
+          btn.style.fontSize = `${finalSize}px`;
         });
       });
+    }
+
+    /* === Вызывает масштабирование при смене экрана === */
+    function show(screenId) {
+      document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+      document.getElementById(screenId).classList.add('active');
+      currentScreen = screenId;
+      setTimeout(updateInputFontSizes, 50);
     }
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -419,7 +489,6 @@
         if (el) setupInputLimit(el, `${id}-counter`, MAX_LEN);
       });
 
-      /* ПРАВКА 5: Запуск адаптации шрифтов */
       setTimeout(updateInputFontSizes, 150);
       window.addEventListener('resize', updateInputFontSizes);
 
@@ -448,12 +517,6 @@
 
       show('welcome');
     });
-
-    function show(screenId) {
-      document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
-      document.getElementById(screenId).classList.add('active');
-      currentScreen = screenId;
-    }
 
     async function submitForm() {
       const btn = document.getElementById('prefull-btn');
@@ -499,7 +562,6 @@
       if (platform === 'telegram') {
         Telegram.WebApp.close();
       } else if (platform === 'vk') {
-        /* ПРАВКА 6: заменен app1234567 на app54435997 */
         const message = "Заполни анкету и участвуй в конкурсе!\nПройти прямо сейчас 👇\nhttps://vk.com/app54435997";
         vkBridge.send('VKWebAppShowWallPostBox', {
           message,
