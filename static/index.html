@@ -3,7 +3,8 @@
 <head>
   <meta charset="utf-8">
   <title>Анкета</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- ПРАВКА 1: добавлен viewport-fit=cover -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <script src="https://unpkg.com/@vkontakte/vk-bridge@2.12.0/dist/vk-bridge.umd.js"></script>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
@@ -12,30 +13,47 @@
       font-family: sans-serif;
       background: #f9f9f9;
       overflow-x: hidden;
-    }
-    .screen {
-      display: none;
       width: 100vw;
       height: 100vh;
     }
-    .active { display: block; }
-
-    .illustration-container,
-    .illustration-container-prefull {
-      position: relative;
+    .screen {
+      display: none;
       width: 100%;
       height: 100%;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      background: white;
+      overflow-y: auto;
+      /* ПРАВКА 2: добавлен padding для safe-area */
+      padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom) 0;
     }
-    .illustration,
-    .illustration-prefull {
+    .active { display: block; }
+
+    /* === АДАПТИВНЫЕ КОНТЕЙНЕРЫ === */
+    .quiz-container {
+      position: relative;
       width: 100%;
       max-width: 1080px;
-      height: auto;
-      max-height: 100%;
+      aspect-ratio: 1080 / 1920;
+      margin: 0 auto;
+    }
+
+    .prefull-container {
+      position: relative;
+      width: 100%;
+      max-width: 1080px;
+      aspect-ratio: 1080 / 2624;
+      margin: 0 auto;
+    }
+
+    .result-container {
+      position: relative;
+      width: 100%;
+      max-width: 1080px;
+      aspect-ratio: 1080 / 4830;
+      margin: 0 auto;
+    }
+
+    .illustration {
+      width: 100%;
+      height: 100%;
       object-fit: contain;
       display: block;
     }
@@ -51,19 +69,19 @@
       font-display: swap;
     }
 
+    /* === АДАПТИВНЫЕ ПОЗИЦИИ (1080×1920) === */
     .input-field {
       position: absolute;
-      left: 175px;
-      top: 745px;
-      width: 750px;
+      left: 16.2%;
+      top: 38.8%;
+      width: 69.4%;
       min-height: 60px;
       max-height: 134px;
       padding: 0 10px;
       font-family: 'InputFont', cursive;
-      font-size: 35px;
-      font-weight: 300;
-      font-style: normal;
-      color: #555555;
+      /* ПРАВКА 3: адаптивный font-size через vmin */
+      font-size: clamp(14px, 3.5vmin, 35px);
+      color: #555;
       text-align: left;
       border: none;
       outline: none;
@@ -72,8 +90,9 @@
       resize: none;
       overflow: hidden;
       z-index: 15;
-      line-height: 67px;
+      line-height: 1.5;
       word-break: break-word;
+      white-space: pre-wrap;
       display: -webkit-box;
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
@@ -81,26 +100,27 @@
 
     .char-counter {
       position: absolute;
-      top: 707px;
-      right: 155px;
-      font-family: 'SF Pro Text', 'Segoe UI', sans-serif;
-      font-size: 12px;
-      font-weight: 300;
+      top: 36.8%;
+      right: 14.4%;
+      font-family: 'SF Pro Text', sans-serif;
+      /* ПРАВКА 3: адаптивный font-size для счетчика */
+      font-size: clamp(10px, 2vmin, 12px);
       color: rgba(51, 51, 51, 0.5);
       z-index: 16;
     }
 
     .action-btn {
       position: absolute;
-      left: 45px;
-      width: 990px;
-      height: 171px;
+      left: 4.2%;
+      width: 91.7%;
+      aspect-ratio: 990 / 171;
+      min-height: 50px;
+      max-height: 171px;
       border-radius: 76px;
-      font-family: 'BloggerSans', 'Segoe UI', sans-serif;
-      font-size: 71px;
+      font-family: 'BloggerSans', sans-serif;
+      font-size: clamp(18px, 4vw, 71px);
       cursor: pointer;
-      transition: all 0.2s ease;
-      z-index: 20;
+      transition: all 0.15s ease;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -109,38 +129,99 @@
       background: transparent;
       text-align: center;
       padding: 0 20px;
-      box-sizing: border-box;
+      box-shadow: 0 8px 8px rgba(0, 0, 0, 0.25);
+      z-index: 20;
+      touch-action: manipulation;
     }
 
     .action-btn:active {
-      transform: translateY(4px);
+      transform: translateY(4px) scale(0.985);
+      opacity: 0.92;
       box-shadow: 0 4px 4px rgba(0, 0, 0, 0.2);
     }
 
-    #welcome .action-btn { bottom: 135px; background: linear-gradient(135deg, #93AE00, #C7DD4C); color: #FFFFFF; box-shadow: 0 8px 8px rgba(0, 0, 0, 0.25); }
-    #q1 .action-btn { bottom: 135px; background: linear-gradient(135deg, #FD5DA2, #CD2F61); color: #FFFFFF; box-shadow: 0 8px 8px rgba(0, 0, 0, 0.25); }
-    #q2-prev, #q3-prev, #q4-prev, #q5-prev, #q6-prev, #q7-prev, #q8-prev { bottom: 135px; background: #FFFFFF; color: #52524F; box-shadow: none; }
-    #q2-next, #q3-next, #q4-next, #q5-next, #q6-next, #q7-next, #q8-next { bottom: 338px; background: linear-gradient(135deg, #BAA0F3, #6E47C5); color: #FFFFFF; box-shadow: 0 8px 8px rgba(0, 0, 0, 0.25); }
+    #welcome .action-btn { bottom: 7.0%; background: linear-gradient(135deg, #93AE00, #C7DD4C); color: #FFFFFF; }
+    #q1 .action-btn { bottom: 7.0%; background: linear-gradient(135deg, #FD5DA2, #CD2F61); color: #FFFFFF; }
+    #q2-prev, #q3-prev, #q4-prev, #q5-prev, #q6-prev, #q7-prev, #q8-prev {
+      bottom: 7.0%; background: #FFFFFF; color: #52524F; box-shadow: none;
+    }
+    #q2-next, #q3-next, #q4-next, #q5-next, #q6-next, #q7-next, #q8-next {
+      bottom: 17.6%; background: linear-gradient(135deg, #BAA0F3, #6E47C5); color: #FFFFFF;
+    }
     #q3-next { background: linear-gradient(135deg, #93AE00, #C7DD4C); }
     #q4-next { background: linear-gradient(135deg, #FD5DA2, #CD2F61); }
     #q5-next { background: linear-gradient(135deg, #BAA0F3, #6E47C5); }
     #q6-next { background: linear-gradient(135deg, #93AE00, #C7DD4C); }
     #q7-next { background: linear-gradient(135deg, #FD5DA2, #CD2F61); }
     #q8-next { background: linear-gradient(135deg, #BAA0F3, #6E47C5); }
-    #prefull-btn { bottom: 200px; background: linear-gradient(135deg, #FD5DA2, #CD2F61); color: #FFFFFF; box-shadow: 0 8px 8px rgba(0, 0, 0, 0.25); }
-    #result-screen .action-btn { bottom: 327px; background: linear-gradient(135deg, #FD5DA2, #CD2F61); color: #FFFFFF; box-shadow: 0 8px 8px rgba(0, 0, 0, 0.25); }
+
+    #prefull-btn {
+      position: absolute;
+      left: 4.2%;
+      width: 91.7%;
+      aspect-ratio: 990 / 171;
+      min-height: 50px;
+      max-height: 171px;
+      bottom: 7.6%;
+      border-radius: 76px;
+      font-family: 'BloggerSans', sans-serif;
+      font-size: clamp(18px, 4vw, 71px);
+      background: linear-gradient(135deg, #FD5DA2, #CD2F61);
+      color: #FFFFFF;
+      cursor: pointer;
+      box-shadow: 0 8px 8px rgba(0, 0, 0, 0.25);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border: none;
+      outline: none;
+      text-align: center;
+      padding: 0 20px;
+    }
+
+    #result-img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      border-radius: 16px;
+    }
+
+    #share-btn {
+      position: absolute;
+      left: 4.2%;
+      width: 91.7%;
+      aspect-ratio: 990 / 171;
+      min-height: 50px;
+      max-height: 171px;
+      bottom: 6.8%;
+      border-radius: 76px;
+      font-family: 'BloggerSans', sans-serif;
+      font-size: clamp(18px, 4vw, 71px);
+      background: linear-gradient(135deg, #FD5DA2, #CD2F61);
+      color: #FFFFFF;
+      cursor: pointer;
+      box-shadow: 0 8px 8px rgba(0, 0, 0, 0.25);
+      border: none;
+      outline: none;
+      text-align: center;
+      padding: 0 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 30;
+    }
   </style>
 </head>
 <body>
   <div id="welcome" class="screen active">
-    <div class="illustration-container">
+    <div class="quiz-container">
       <img src="/static/images/welcome.jpg" class="illustration">
       <button class="action-btn" id="start-btn">Заполнить анкету</button>
     </div>
   </div>
 
   <div id="q1" class="screen">
-    <div class="illustration-container">
+    <div class="quiz-container">
       <img src="/static/images/q1.jpg" class="illustration">
       <div id="name" class="input-field" contenteditable="true"></div>
       <div class="char-counter" id="name-counter">0/76</div>
@@ -149,7 +230,7 @@
   </div>
 
   <div id="q2" class="screen">
-    <div class="illustration-container">
+    <div class="quiz-container">
       <img src="/static/images/q2.jpg" class="illustration">
       <div id="city" class="input-field" contenteditable="true"></div>
       <div class="char-counter" id="city-counter">0/76</div>
@@ -159,7 +240,7 @@
   </div>
 
   <div id="q3" class="screen">
-    <div class="illustration-container">
+    <div class="quiz-container">
       <img src="/static/images/q3.jpg" class="illustration">
       <div id="dream" class="input-field" contenteditable="true"></div>
       <div class="char-counter" id="dream-counter">0/76</div>
@@ -169,7 +250,7 @@
   </div>
 
   <div id="q4" class="screen">
-    <div class="illustration-container">
+    <div class="quiz-container">
       <img src="/static/images/q4.jpg" class="illustration">
       <div id="age" class="input-field" contenteditable="true"></div>
       <div class="char-counter" id="age-counter">0/76</div>
@@ -179,7 +260,7 @@
   </div>
 
   <div id="q5" class="screen">
-    <div class="illustration-container">
+    <div class="quiz-container">
       <img src="/static/images/q5.jpg" class="illustration">
       <div id="hobby" class="input-field" contenteditable="true"></div>
       <div class="char-counter" id="hobby-counter">0/76</div>
@@ -189,7 +270,7 @@
   </div>
 
   <div id="q6" class="screen">
-    <div class="illustration-container">
+    <div class="quiz-container">
       <img src="/static/images/q6.jpg" class="illustration">
       <div id="goal" class="input-field" contenteditable="true"></div>
       <div class="char-counter" id="goal-counter">0/76</div>
@@ -199,7 +280,7 @@
   </div>
 
   <div id="q7" class="screen">
-    <div class="illustration-container">
+    <div class="quiz-container">
       <img src="/static/images/q7.jpg" class="illustration">
       <div id="quote" class="input-field" contenteditable="true"></div>
       <div class="char-counter" id="quote-counter">0/76</div>
@@ -209,7 +290,7 @@
   </div>
 
   <div id="q8" class="screen">
-    <div class="illustration-container">
+    <div class="quiz-container">
       <img src="/static/images/q8.jpg" class="illustration">
       <div id="extra" class="input-field" contenteditable="true"></div>
       <div class="char-counter" id="extra-counter">0/76</div>
@@ -219,15 +300,15 @@
   </div>
 
   <div id="prefull" class="screen">
-    <div class="illustration-container-prefull">
-      <img src="/static/images/prefull.jpg" class="illustration-prefull">
+    <div class="prefull-container">
+      <img src="/static/images/prefull.jpg" class="illustration">
       <button class="action-btn" id="prefull-btn">Посмотреть результат</button>
     </div>
   </div>
 
   <div id="result-screen" class="screen">
-    <div style="padding: 20px; text-align: center;">
-      <img id="result-img" style="width:100%; max-width:600px; border-radius:16px; margin:20px 0;">
+    <div class="result-container">
+      <img id="result-img">
       <button class="action-btn" id="share-btn">Поделиться с подружками!</button>
     </div>
   </div>
@@ -236,22 +317,25 @@
     let currentScreen = 'welcome';
     let userId = null;
     let platform = 'web';
-    const TELEGRAM_BOT_NAME = "your_bot";
+    const TELEGRAM_BOT_NAME = "Sloboda8Marta_bot";
     const MAX_LEN = 76;
 
     if (window.location.search.includes('vk_app_id')) {
       platform = 'vk';
-      vkBridge.send('VKWebAppInit');
-      vkBridge.send('VKWebAppGetUserInfo').then(data => userId = data.id);
+      vkBridge.send('VKWebAppInit').catch(console.error);
+      vkBridge.send('VKWebAppGetUserInfo')
+        .then(data => userId = data.id)
+        .catch(console.error);
     } else if (window.Telegram?.WebApp) {
       platform = 'telegram';
       const initData = Telegram.WebApp.initDataUnsafe;
       userId = initData?.user?.id;
       Telegram.WebApp.ready();
+      Telegram.WebApp.expand();
     }
 
-    function getText(el) { return el.innerText || el.textContent || ''; }
-    function setText(el, text) { el.innerText = text; }
+    function getText(el) { return el?.innerText || ''; }
+    function setText(el, text) { if (el) el.innerText = text; }
 
     const STORAGE_KEY = 'quiz_answers_v15';
     function saveAnswer(field, value) {
@@ -276,96 +360,107 @@
       localStorage.removeItem(STORAGE_KEY);
     }
 
-    document.addEventListener('DOMContentLoaded', loadAnswers);
-
     function setupInputLimit(div, counterId, maxLen = MAX_LEN) {
       div.addEventListener('keydown', (e) => {
-        const isSpecialKey = ['Backspace','Delete','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Tab','Escape','Enter','Control','Meta','Alt'].includes(e.key);
+        const isSpecialKey = ['Backspace','Delete','ArrowLeft','ArrowRight',
+          'ArrowUp','ArrowDown','Tab','Escape',
+          'Control','Meta','Alt'].includes(e.key);
+
         if (isSpecialKey) return;
+
         const text = getText(div);
-        const key = e.key;
-        if (text.length >= 4) {
-          const last4 = text.slice(-4);
-          if (/^(.)\1{3}$/.test(last4) && key === last4[0]) {
-            e.preventDefault(); return false;
-          }
-        }
         if (text.length >= maxLen) {
-          e.preventDefault(); return false;
+          e.preventDefault();
+          return false;
         }
       });
+
       div.addEventListener('input', () => {
         const text = getText(div);
-        document.getElementById(counterId).textContent = `${text.length}/${maxLen}`;
+        const counter = document.getElementById(counterId);
+
+        if (text.length > maxLen) {
+          const trimmed = text.slice(0, maxLen);
+          setText(div, trimmed);
+          if (counter) counter.textContent = `${maxLen}/${maxLen}`;
+          saveAnswer(div.id, trimmed);
+          return;
+        }
+
+        if (counter) counter.textContent = `${text.length}/${maxLen}`;
         saveAnswer(div.id, text);
       });
     }
 
-    ['name','city','dream','age','hobby','goal','quote','extra'].forEach(id => {
-      const el = document.getElementById(id);
-      const counterId = `${id}-counter`;
-      if (el) {
-        setupInputLimit(el, counterId, MAX_LEN);
-        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-        if (saved[id]) {
-          setText(el, saved[id]);
-          document.getElementById(counterId).textContent = `${saved[id].length}/${MAX_LEN}`;
-        }
+    /* ПРАВКА 4: Функция адаптации шрифтов через JS */
+    function updateInputFontSizes() {
+      const containers = document.querySelectorAll('.quiz-container, .prefull-container, .result-container');
+      containers.forEach(container => {
+        const containerWidth = container.offsetWidth;
+        if (!containerWidth) return;
+        const scaleFactor = containerWidth / 1080;
+
+        container.querySelectorAll('.input-field').forEach(field => {
+          const newSize = 35 * scaleFactor;
+          field.style.fontSize = `${Math.max(14, Math.min(35, newSize))}px`;
+        });
+        container.querySelectorAll('.char-counter').forEach(counter => {
+          const newSize = 12 * scaleFactor;
+          counter.style.fontSize = `${Math.max(10, Math.min(12, newSize))}px`;
+        });
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      loadAnswers();
+
+      ['name','city','dream','age','hobby','goal','quote','extra'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) setupInputLimit(el, `${id}-counter`, MAX_LEN);
+      });
+
+      /* ПРАВКА 5: Запуск адаптации шрифтов */
+      setTimeout(updateInputFontSizes, 150);
+      window.addEventListener('resize', updateInputFontSizes);
+
+      document.getElementById('start-btn').onclick = () => show('q1');
+      document.getElementById('q1-next').onclick = () => show('q2');
+      document.getElementById('q2-prev').onclick = () => show('q1');
+      document.getElementById('q2-next').onclick = () => show('q3');
+      document.getElementById('q3-prev').onclick = () => show('q2');
+      document.getElementById('q3-next').onclick = () => show('q4');
+      document.getElementById('q4-prev').onclick = () => show('q3');
+      document.getElementById('q4-next').onclick = () => show('q5');
+      document.getElementById('q5-prev').onclick = () => show('q4');
+      document.getElementById('q5-next').onclick = () => show('q6');
+      document.getElementById('q6-prev').onclick = () => show('q5');
+      document.getElementById('q6-next').onclick = () => show('q7');
+      document.getElementById('q7-prev').onclick = () => show('q6');
+      document.getElementById('q7-next').onclick = () => show('q8');
+      document.getElementById('q8-prev').onclick = () => show('q7');
+      document.getElementById('q8-next').onclick = () => show('prefull');
+      document.getElementById('prefull-btn').onclick = () => submitForm();
+      document.getElementById('share-btn').onclick = () => shareResult();
+
+      if (platform === 'telegram' && window.Telegram?.WebApp) {
+        setTimeout(() => Telegram.WebApp.expand(), 300);
       }
+
+      show('welcome');
     });
 
     function show(screenId) {
-      document.getElementById(currentScreen).classList.remove('active');
+      document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
       document.getElementById(screenId).classList.add('active');
       currentScreen = screenId;
     }
 
-    document.getElementById('start-btn').onclick = () => show('q1');
-    document.getElementById('q1-next').onclick = () => show('q2');
-    document.getElementById('q2-prev').onclick = () => show('q1');
-    document.getElementById('q2-next').onclick = () => show('q3');
-    document.getElementById('q3-prev').onclick = () => show('q2');
-    document.getElementById('q3-next').onclick = () => show('q4');
-    document.getElementById('q4-prev').onclick = () => show('q3');
-    document.getElementById('q4-next').onclick = () => show('q5');
-    document.getElementById('q5-prev').onclick = () => show('q4');
-    document.getElementById('q5-next').onclick = () => show('q6');
-    document.getElementById('q6-prev').onclick = () => show('q5');
-    document.getElementById('q6-next').onclick = () => show('q7');
-    document.getElementById('q7-prev').onclick = () => show('q6');
-    document.getElementById('q7-next').onclick = () => show('q8');
-    document.getElementById('q8-prev').onclick = () => show('q7');
-    document.getElementById('q8-next').onclick = () => show('prefull');
-    document.getElementById('prefull-btn').onclick = () => submitForm();
-    document.getElementById('share-btn').onclick = () => shareResult();
-
     async function submitForm() {
       const btn = document.getElementById('prefull-btn');
+      if (!btn) return;
       const originalText = btn.textContent.trim();
-
-      if (!document.getElementById('spinner-style')) {
-        const style = document.createElement('style');
-        style.id = 'spinner-style';
-        style.textContent = `@keyframes spin { to { transform: rotate(360deg); } }`;
-        document.head.appendChild(style);
-      }
-
-      btn.innerHTML = `
-        <div style="display:flex; align-items:center; justify-content:center; width:100%; height:100%;">
-          <span>${originalText}</span>
-          <span id="spinner" style="
-            display:inline-block;
-            width:48px;
-            height:48px;
-            border:4px solid #fff;
-            border-top-color:transparent;
-            border-radius:50%;
-            animation:spin 1s linear infinite;
-            margin-left:26px;
-            margin-top:4px;
-          "></span>
-        </div>
-      `;
+      btn.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;width:100%;height:100%"><span>${originalText}</span><span style="display:inline-block;width:48px;height:48px;border:4px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;margin-left:26px"></span></div>`;
+      btn.style.pointerEvents = 'none';
 
       try {
         const answers = {
@@ -381,9 +476,11 @@
 
         const res = await fetch('/generate', {
           method: 'POST',
-          headers: {'Content-Type': 'application/json'},
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ user_id: userId, platform, answers })
         });
+
+        if (!res.ok) throw new Error('Server error');
 
         const blob = await res.blob();
         const url = URL.createObjectURL(blob);
@@ -394,18 +491,26 @@
         console.error("Ошибка:", e);
         alert("Не удалось сгенерировать результат. Попробуйте снова.");
         btn.innerHTML = originalText;
+        btn.style.pointerEvents = 'auto';
       }
     }
 
-    async function shareResult() {
-      const imgUrl = document.getElementById('result-img').src;
-      if (platform === 'vk') {
-        const message = "Заполни анкету и участвуй в конкурсе!\nПройти прямо сейчас 👇\nhttps://vk.com/app1234567";
-        vkBridge.send('VKWebAppShowWallPostBox', { message, attachments: imgUrl });
-      } else if (platform === 'telegram') {
-        alert(`✨ Твой результат уже в чате с @${TELEGRAM_BOT_NAME}!\n\n👉 Нажми «Переслать» и отправь подружкам!\n\nУчаствуй в конкурсе!`);
+    function shareResult() {
+      if (platform === 'telegram') {
+        Telegram.WebApp.close();
+      } else if (platform === 'vk') {
+        /* ПРАВКА 6: заменен app1234567 на app54435997 */
+        const message = "Заполни анкету и участвуй в конкурсе!\nПройти прямо сейчас 👇\nhttps://vk.com/app54435997";
+        vkBridge.send('VKWebAppShowWallPostBox', {
+          message,
+          attachments: document.getElementById('result-img').src
+        }).catch(console.error);
       }
     }
+
+    const style = document.createElement('style');
+    style.textContent = `@keyframes spin { to { transform: rotate(360deg); } }`;
+    document.head.appendChild(style);
   </script>
 </body>
 </html>

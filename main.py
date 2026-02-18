@@ -9,10 +9,9 @@ import json
 import requests
 import csv
 
-# === ЗАГРУЗКА ПЕРЕМЕННЫХ ИЗ .env ===
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
-VK_APP_ID = "1234567"
-TELEGRAM_BOT_NAME = "Sloboda8Marta_bot"  # ← без @
+VK_APP_ID = "54435997"
+TELEGRAM_BOT_NAME = "Sloboda8Marta_bot"
 
 STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
 TEMPLATE_PATH = os.path.join(STATIC_DIR, "full_template.jpg")
@@ -21,7 +20,6 @@ init_db()
 app = FastAPI()
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
-# Создаём заглушку, если шаблона нет
 if not os.path.exists(TEMPLATE_PATH):
     img = Image.new('RGB', (1080, 4830), color=(245, 245, 245))
     draw = ImageDraw.Draw(img)
@@ -39,7 +37,6 @@ def root():
 
 
 def smart_split(text: str, max_first_line=38):
-    """Разбивает текст на 2 строки: первая — до 38 символов, вторая — остаток"""
     if not text:
         return "", ""
     words = text.split()
@@ -72,12 +69,11 @@ async def generate_result(request: Request):
 
     font_path = os.path.join(STATIC_DIR, "fonts", "Blogger_Sans-Light_Italic.otf")
     try:
-        font = ImageFont.truetype(font_path, 40)  # ← размер шрифта: 40
+        font = ImageFont.truetype(font_path, 35)
     except Exception as e:
         print(f"⚠️ Шрифт не загружен: {e}. Используем стандартный.")
         font = ImageFont.load_default()
 
-    # Твои координаты
     y_first = {
         'name': 827,
         'city': 1131,
@@ -92,12 +88,10 @@ async def generate_result(request: Request):
     fields = ['name', 'city', 'dream', 'age', 'hobby', 'goal', 'quote', 'extra']
 
     for field in fields:
-        text = str(answers.get(field, "")).strip()[:76]  # ← 76 символов
+        text = str(answers.get(field, "")).strip()[:76]
         if not text:
             continue
-
-        line1, line2 = smart_split(text, max_first_line=38)  # ← 38 на первую строку
-
+        line1, line2 = smart_split(text, max_first_line=38)
         y1 = y_first[field]
         draw.text((164, y1), line1, fill=(85, 85, 85), font=font)
         if line2:
@@ -107,22 +101,26 @@ async def generate_result(request: Request):
     img.save(img_io, 'JPEG', quality=95)
     img_io.seek(0)
 
-    # Отправка в Telegram (только если токен задан)
+    # 🔴 ИСПРАВЛЕНО: убраны пробелы в URL
     if platform == "telegram" and user_id and TELEGRAM_BOT_TOKEN:
         caption = (
             "✨ Ваш персонализированный результат!\n\n"
             "Хочешь такой же? Пройди анкету прямо сейчас 👇\n"
             f"https://t.me/{TELEGRAM_BOT_NAME}?start"
         )
-        img_io_for_tg = io.BytesIO(img_io.getvalue())
-        img_io_for_tg.name = "result.jpg"
+        img_for_tg = io.BytesIO(img_io.getvalue())
+        img_for_tg.name = "result.jpg"
         url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendPhoto"
-        files = {"photo": img_io_for_tg}
         payload = {"chat_id": user_id, "caption": caption}
+        files = {"photo": ("result.jpg", img_for_tg, "image/jpeg")}
         try:
-            requests.post(url, data=payload, files=files)
+            response = requests.post(url, data=payload, files=files, timeout=10)
+            if response.status_code != 200:
+                print(f"❌ Telegram send failed: {response.status_code} | {response.text}")
+            else:
+                print(f"✅ Sent to Telegram user {user_id}")
         except Exception as e:
-            print("Telegram send error:", e)
+            print(f"❌ Telegram send error: {e}")
 
     return StreamingResponse(img_io, media_type="image/jpeg")
 
