@@ -317,10 +317,10 @@
     let userId = null;
     let platform = 'web';
     const TELEGRAM_BOT_NAME = "Sloboda8Marta_bot";
-    const MAX_LEN = 70; /* ← ИЗМЕНЕНО с 66 на 70 */
+    const MAX_LEN = 70; /* ← ИСПРАВЛЕНО: 70 вместо 76 */
     const MAX_LINES = 2;
     const MAX_CHARS_LINE_1 = 33;
-    const MAX_CHARS_LINE_2_IF_30_PLUS = 40; /* ← Если в 1 строке 30+, то во 2 можно 40 */
+    const MAX_CHARS_LINE_2_IF_30_PLUS = 40;
 
     if (window.location.search.includes('vk_app_id')) {
       platform = 'vk';
@@ -381,7 +381,6 @@
             e.preventDefault();
             return false;
           }
-          // Разрешаем Enter, если ещё нет 2 строк
           return;
         }
 
@@ -396,12 +395,10 @@
         const counter = document.getElementById(counterId);
         const lines = text.split('\n');
 
-        // Проверяем лимиты для каждой строки
         if (lines.length >= 1 && lines[0].length > MAX_CHARS_LINE_1) {
           lines[0] = lines[0].slice(0, MAX_CHARS_LINE_1);
         }
 
-        // Если в 1 строке 30+ символов, то во 2 можно 40, иначе 33
         const maxLine2 = lines.length > 0 && lines[0].length >= 30
           ? MAX_CHARS_LINE_2_IF_30_PLUS
           : MAX_CHARS_LINE_1;
@@ -410,7 +407,6 @@
           lines[1] = lines[1].slice(0, maxLine2);
         }
 
-        // Обрезаем до 2 строк
         if (lines.length > MAX_LINES) {
           const trimmed = lines.slice(0, MAX_LINES).join('\n');
           setText(div, trimmed);
@@ -419,7 +415,6 @@
           return;
         }
 
-        // Проверяем общий лимит 70
         const joinedText = lines.join('\n');
         if (joinedText.length > maxLen) {
           const trimmed = joinedText.slice(0, maxLen);
@@ -518,6 +513,12 @@
       show('welcome');
     });
 
+    function show(screenId) {
+      document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+      document.getElementById(screenId).classList.add('active');
+      currentScreen = screenId;
+    }
+
     async function submitForm() {
       const btn = document.getElementById('prefull-btn');
       if (!btn) return;
@@ -560,8 +561,12 @@
 
     function shareResult() {
       if (platform === 'telegram') {
-        Telegram.WebApp.close();
+        // 🔴 TELEGRAM: Показываем сообщение, бот уже отправил картинку
+        Telegram.WebApp.showAlert(
+          "Результат уже в чате с ботом! Поделись с подружками и участвуй в розыгрыше призов!"
+        );
       } else if (platform === 'vk') {
+        // 🔴 VK: Открываем окно поста на стене
         const message = "Заполни анкету и участвуй в конкурсе!\nПройти прямо сейчас 👇\nhttps://vk.com/app54435997";
         vkBridge.send('VKWebAppShowWallPostBox', {
           message,

@@ -36,22 +36,27 @@ def root():
     return FileResponse(os.path.join(STATIC_DIR, "index.html"))
 
 
-def smart_split(text: str, max_first_line=38):
+def smart_split(text: str, max_first_line=33):
+    """
+    Исправленная функция: делит текст на 2 строки по символам.
+    Если в 1 строке 30+ символов, то во 2 можно до 40 символов.
+    Иначе во 2 строке максимум 33 символа.
+    """
     if not text:
         return "", ""
-    words = text.split()
-    line1 = ""
-    line2 = ""
-    for word in words:
-        test_line = f"{line1} {word}".strip()
-        if len(test_line) <= max_first_line:
-            line1 = test_line
-        else:
-            line2 = " ".join(words[len(line1.split()):])
-            break
-    if not line1:
-        line1 = text[:max_first_line]
-        line2 = text[max_first_line:]
+
+    # Первая строка: максимум max_first_line символов
+    line1 = text[:max_first_line]
+
+    # Остаток для второй строки
+    remaining = text[max_first_line:]
+
+    # Если в 1 строке 30+ символов, то во 2 можно 40, иначе 33
+    max_line2 = 40 if len(line1) >= 30 else 33
+
+    # Вторая строка: максимум max_line2 символов
+    line2 = remaining[:max_line2]
+
     return line1, line2
 
 
@@ -62,8 +67,10 @@ async def generate_result(request: Request):
     platform = data.get("platform", "web")
     answers = data.get("answers", {})
 
+    # Сохраняем в БД
     save_participant(user_id, platform, json.dumps(answers, ensure_ascii=False))
 
+    # Генерируем изображение
     img = Image.open(TEMPLATE_PATH).convert("RGB")
     draw = ImageDraw.Draw(img)
 
@@ -88,10 +95,10 @@ async def generate_result(request: Request):
     fields = ['name', 'city', 'dream', 'age', 'hobby', 'goal', 'quote', 'extra']
 
     for field in fields:
-        text = str(answers.get(field, "")).strip()[:76]
+        text = str(answers.get(field, "")).strip()[:70]  # ← ИСПРАВЛЕНО: 70 вместо 76
         if not text:
             continue
-        line1, line2 = smart_split(text, max_first_line=38)
+        line1, line2 = smart_split(text, max_first_line=33)
         y1 = y_first[field]
         draw.text((164, y1), line1, fill=(85, 85, 85), font=font)
         if line2:
@@ -100,19 +107,39 @@ async def generate_result(request: Request):
     img_io = io.BytesIO()
     img.save(img_io, 'JPEG', quality=95)
     img_io.seek(0)
+    img_bytes = img_io.getvalue()
 
-    # 🔴 ИСПРАВЛЕНО: убраны пробелы в URL
+    # 🔴 TELEGRAM: Отправляем картинку в чат с ботом
     if platform == "telegram" and user_id and TELEGRAM_BOT_TOKEN:
         caption = (
             "✨ Ваш персонализированный результат!\n\n"
             "Хочешь такой же? Пройди анкету прямо сейчас 👇\n"
             f"https://t.me/{TELEGRAM_BOT_NAME}?start"
         )
-        img_for_tg = io.BytesIO(img_io.getvalue())
-        img_for_tg.name = "result.jpg"
+
+        # Отправляем фото с inline keyboard для шеринга
         url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendPhoto"
-        payload = {"chat_id": user_id, "caption": caption}
-        files = {"photo": ("result.jpg", img_for_tg, "image/jpeg")}
+
+        # Inline keyboard с кнопкой "Поделиться"
+        keyboard = {
+            "inline_keyboard": [
+                [
+                    {
+                        "text": "📤 Поделиться с подружками",
+                        "switch_inline_query": "✨ Мой результат из анкеты Слобода! Пройди тоже 👇"
+                    }
+                ]
+            ]
+        }
+
+        payload = {
+            "chat_id": user_id,
+            "caption": caption,
+            "reply_markup": json.dumps(keyboard)
+        }
+
+        files = {"photo": ("result.jpg", io.BytesIO(img_bytes), "image/jpeg")}
+
         try:
             response = requests.post(url, data=payload, files=files, timeout=10)
             if response.status_code != 200:
@@ -122,7 +149,7 @@ async def generate_result(request: Request):
         except Exception as e:
             print(f"❌ Telegram send error: {e}")
 
-    return StreamingResponse(img_io, media_type="image/jpeg")
+    return StreamingResponse(io.BytesIO(img_bytes), media_type="image/jpeg")
 
 
 @app.get("/admin/export")
