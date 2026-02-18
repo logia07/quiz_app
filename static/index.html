@@ -28,6 +28,19 @@
     }
     .active { display: block; }
 
+    /* === 🔴 ФОН ПОД ИЛЛЮСТРАЦИИ (ПРОТИВ БЕЛОГО ПОДВАЛА) === */
+    #welcome { background-color: #EDFD97; }
+    #q1 { background-color: #FBC2D6; }
+    #q2 { background-color: #D7C9F6; }
+    #q3 { background-color: #EDFD97; }
+    #q4 { background-color: #FBC2D6; }
+    #q5 { background-color: #D7C9F6; }
+    #q6 { background-color: #EDFD97; }
+    #q7 { background-color: #FBC2D6; }
+    #q8 { background-color: #D7C9F6; }
+    #prefull { background-color: #FFF9E6; }
+    #result-screen { background-color: #FFFFFF; }
+
     /* === АДАПТИВНЫЕ КОНТЕЙНЕРЫ === */
     .quiz-container {
       position: relative;
@@ -60,14 +73,15 @@
       display: block;
     }
 
+    /* === 🔴 ШРИФТЫ (ОДИН ДЛЯ ВСЕХ УСТРОЙСТВ) === */
     @font-face {
       font-family: 'InputFont';
-      src: url('/static/fonts/Blogger_Sans-Light_Italic.otf') format('opentype');
+      src: url('static/fonts/Blogger_Sans-Light.otf') format('opentype');
       font-display: swap;
     }
     @font-face {
       font-family: 'BloggerSans';
-      src: url('/static/fonts/Blogger_Sans-Light.otf') format('opentype');
+      src: url('static/fonts/Blogger_Sans-Light.otf') format('opentype');
       font-display: swap;
     }
 
@@ -78,9 +92,12 @@
       top: 38.8%;
       width: 69.4%;
       height: 134px;
+      box-sizing: border-box;
       padding: 0 10px 0 5px;
-      font-family: 'InputFont', cursive;
-      font-size: clamp(12px, 3.5vmin, 35px);
+      font-family: 'InputFont', sans-serif;
+      font-style: normal;
+      font-size: clamp(14px, 3.5vmin, 37px);  /* 🔴 УВЕЛИЧЕНО НА 2px (было 12px/35px) */
+      line-height: 1.8;  /* 🔴 УВЕЛИЧЕНО для +10px между строками (было 1.5) */
       color: #555;
       text-align: left;
       border: none;
@@ -90,7 +107,6 @@
       resize: none;
       overflow: hidden;
       z-index: 15;
-      line-height: 1.5;
       word-break: break-word;
       white-space: pre-wrap;
       display: -webkit-box;
@@ -108,6 +124,7 @@
       z-index: 16;
     }
 
+    /* === 🔴 КНОПКИ — УВЕЛИЧЕННЫЙ ШРИФТ (КАК WELCOME/Q1) === */
     .action-btn {
       position: absolute;
       left: 4.2%;
@@ -117,7 +134,7 @@
       max-height: 171px;
       border-radius: 76px;
       font-family: 'BloggerSans', sans-serif;
-      font-size: clamp(18px, 4vw, 71px);
+      font-size: clamp(20px, 5vw, 71px);
       cursor: pointer;
       transition: all 0.15s ease;
       display: flex;
@@ -164,7 +181,7 @@
       bottom: 7.6%;
       border-radius: 76px;
       font-family: 'BloggerSans', sans-serif;
-      font-size: clamp(18px, 4vw, 71px);
+      font-size: clamp(20px, 5vw, 71px);
       background: linear-gradient(135deg, #FD5DA2, #CD2F61);
       color: #FFFFFF;
       cursor: pointer;
@@ -195,7 +212,7 @@
       bottom: 6.8%;
       border-radius: 76px;
       font-family: 'BloggerSans', sans-serif;
-      font-size: clamp(18px, 4vw, 71px);
+      font-size: clamp(20px, 5vw, 71px);
       background: linear-gradient(135deg, #FD5DA2, #CD2F61);
       color: #FFFFFF;
       cursor: pointer;
@@ -214,14 +231,14 @@
 <body>
   <div id="welcome" class="screen active">
     <div class="quiz-container">
-      <img src="/static/images/welcome.jpg" class="illustration">
+      <img src="static/images/welcome.jpg" class="illustration">
       <button class="action-btn" id="start-btn">Заполнить анкету</button>
     </div>
   </div>
 
   <div id="q1" class="screen">
     <div class="quiz-container">
-      <img src="/static/images/q1.jpg" class="illustration">
+      <img src="static/images/q1.jpg" class="illustration">
       <div id="name" class="input-field" contenteditable="true"></div>
       <div class="char-counter" id="name-counter">0/70</div>
       <button class="action-btn" id="q1-next">вперед</button>
@@ -230,7 +247,7 @@
 
   <div id="q2" class="screen">
     <div class="quiz-container">
-      <img src="/static/images/q2.jpg" class="illustration">
+      <img src="static/images/q2.jpg" class="illustration">
       <div id="city" class="input-field" contenteditable="true"></div>
       <div class="char-counter" id="city-counter">0/70</div>
       <button class="action-btn" id="q2-prev">назад</button>
@@ -240,7 +257,7 @@
 
   <div id="q3" class="screen">
     <div class="quiz-container">
-      <img src="/static/images/q3.jpg" class="illustration">
+      <img src="static/images/q3.jpg" class="illustration">
       <div id="dream" class="input-field" contenteditable="true"></div>
       <div class="char-counter" id="dream-counter">0/70</div>
       <button class="action-btn" id="q3-prev">назад</button>
@@ -250,7 +267,7 @@
 
   <div id="q4" class="screen">
     <div class="quiz-container">
-      <img src="/static/images/q4.jpg" class="illustration">
+      <img src="static/images/q4.jpg" class="illustration">
       <div id="age" class="input-field" contenteditable="true"></div>
       <div class="char-counter" id="age-counter">0/70</div>
       <button class="action-btn" id="q4-prev">назад</button>
@@ -260,7 +277,7 @@
 
   <div id="q5" class="screen">
     <div class="quiz-container">
-      <img src="/static/images/q5.jpg" class="illustration">
+      <img src="static/images/q5.jpg" class="illustration">
       <div id="hobby" class="input-field" contenteditable="true"></div>
       <div class="char-counter" id="hobby-counter">0/70</div>
       <button class="action-btn" id="q5-prev">назад</button>
@@ -270,7 +287,7 @@
 
   <div id="q6" class="screen">
     <div class="quiz-container">
-      <img src="/static/images/q6.jpg" class="illustration">
+      <img src="static/images/q6.jpg" class="illustration">
       <div id="goal" class="input-field" contenteditable="true"></div>
       <div class="char-counter" id="goal-counter">0/70</div>
       <button class="action-btn" id="q6-prev">назад</button>
@@ -280,7 +297,7 @@
 
   <div id="q7" class="screen">
     <div class="quiz-container">
-      <img src="/static/images/q7.jpg" class="illustration">
+      <img src="static/images/q7.jpg" class="illustration">
       <div id="quote" class="input-field" contenteditable="true"></div>
       <div class="char-counter" id="quote-counter">0/70</div>
       <button class="action-btn" id="q7-prev">назад</button>
@@ -290,7 +307,7 @@
 
   <div id="q8" class="screen">
     <div class="quiz-container">
-      <img src="/static/images/q8.jpg" class="illustration">
+      <img src="static/images/q8.jpg" class="illustration">
       <div id="extra" class="input-field" contenteditable="true"></div>
       <div class="char-counter" id="extra-counter">0/70</div>
       <button class="action-btn" id="q8-prev">назад</button>
@@ -300,7 +317,7 @@
 
   <div id="prefull" class="screen">
     <div class="prefull-container">
-      <img src="/static/images/prefull.jpg" class="illustration">
+      <img src="static/images/prefull.jpg" class="illustration">
       <button class="action-btn" id="prefull-btn">Посмотреть результат</button>
     </div>
   </div>
@@ -316,7 +333,7 @@
     let currentScreen = 'welcome';
     let userId = null;
     let platform = 'web';
-    let resultPublicUrl = null; /* ← 🔴 ХРАНИМ ПУБЛИЧНЫЙ URL */
+    let resultPublicUrl = null;
     const TELEGRAM_BOT_NAME = "Sloboda8Marta_bot";
     const MAX_LEN = 70;
     const MAX_LINES = 2;
@@ -374,13 +391,18 @@
 
         const text = getText(div);
         const lines = countLines(text);
+        const currentLineIndex = lines.length - 1;
 
         if (e.key === 'Enter') {
           if (lines >= MAX_LINES) {
             e.preventDefault();
             return false;
           }
-          return;
+          if (currentLineIndex === 0) {
+            return;
+          }
+          e.preventDefault();
+          return false;
         }
 
         if (text.length >= maxLen) {
@@ -437,13 +459,12 @@
         const scaleFactor = containerWidth / 1080;
 
         container.querySelectorAll('.input-field').forEach(field => {
-          const baseSize = 35;
+          const baseSize = 37;  /* 🔴 УВЕЛИЧЕНО НА 2 (было 35) */
           const newSize = baseSize * scaleFactor;
-          const finalSize = Math.max(11, Math.min(35, newSize));
+          const finalSize = Math.max(14, Math.min(37, newSize));  /* 🔴 УВЕЛИЧЕНО НА 2 (было 12/35) */
           field.style.fontSize = `${finalSize}px`;
 
-          const additionalLineHeight = 5 / finalSize;
-          const finalLineHeight = 1.5 + additionalLineHeight;
+          const finalLineHeight = 1.8;  /* 🔴 УВЕЛИЧЕНО для +10px между строками */
           field.style.lineHeight = `${finalLineHeight}`;
 
           const paddingTop = 5 * scaleFactor;
@@ -453,14 +474,14 @@
         container.querySelectorAll('.char-counter').forEach(counter => {
           const baseSize = 12;
           const newSize = baseSize * scaleFactor;
-          const finalSize = Math.max(9, Math.min(12, newSize));
+          const finalSize = Math.max(10, Math.min(12, newSize));
           counter.style.fontSize = `${finalSize}px`;
         });
 
         container.querySelectorAll('.action-btn').forEach(btn => {
           const baseSize = 71;
           const newSize = baseSize * scaleFactor;
-          const finalSize = Math.max(16, Math.min(71, newSize));
+          const finalSize = Math.max(20, Math.min(71, newSize));
           btn.style.fontSize = `${finalSize}px`;
         });
       });
@@ -470,6 +491,7 @@
       document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
       document.getElementById(screenId).classList.add('active');
       currentScreen = screenId;
+      setTimeout(updateInputFontSizes, 50);
     }
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -528,7 +550,7 @@
           extra: getText(document.getElementById('extra')) || ''
         };
 
-        const res = await fetch('/generate', {
+        const res = await fetch('generate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ user_id: userId, platform, answers })
@@ -540,8 +562,7 @@
         const url = URL.createObjectURL(blob);
         document.getElementById('result-img').src = url;
 
-        // 🔴 ПОЛУЧАЕМ ПУБЛИЧНЫЙ URL ИЗ ЗАГОЛОВКА
-        resultPublicUrl = res.headers.get('X-Result-URL');
+        resultPublicUrl = res.headers.get('x-result-url') || res.headers.get('X-Result-URL');
 
         show('result-screen');
         clearAnswers();
@@ -559,9 +580,8 @@
           "Результат уже в чате с ботом! Поделись с подружками и участвуй в розыгрыше призов!"
         );
       } else if (platform === 'vk') {
-        // 🔴 ИСПОЛЬЗУЕМ ПУБЛИЧНЫЙ URL ВМЕСТО BLOB
         const imageUrl = resultPublicUrl
-          ? window.location.origin + resultPublicUrl
+          ? window.location.origin + '/' + resultPublicUrl
           : document.getElementById('result-img').src;
 
         const message = "Заполни анкету и участвуй в конкурсе!\nПройти прямо сейчас 👇\nhttps://vk.com/app54435997";
@@ -572,6 +592,18 @@
         }).catch(console.error);
       }
     }
+
+    // 🔴 ФИКС 1: АНИМАЦИЯ ТОЛЬКО НАЖАТОЙ КНОПКИ
+    document.querySelectorAll('.action-btn').forEach(btn => {
+      btn.addEventListener('touchstart', function() {
+        document.querySelectorAll('.action-btn').forEach(b => b.style.transform = '');
+        this.style.transform = 'translateY(4px) scale(0.985)';
+      }, { passive: true });
+
+      btn.addEventListener('touchend', function() {
+        this.style.transform = '';
+      }, { passive: true });
+    });
 
     const style = document.createElement('style');
     style.textContent = `@keyframes spin { to { transform: rotate(360deg); } }`;
