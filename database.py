@@ -3,6 +3,7 @@ import os
 
 DB_PATH = "participants.db"
 
+
 def init_db():
     if not os.path.exists(DB_PATH):
         conn = sqlite3.connect(DB_PATH)
@@ -20,9 +21,12 @@ def init_db():
         conn.commit()
         conn.close()
 
-def save_participant(user_id: int, platform: str,  str):
-    if not user_id or not platform:
+
+def save_participant(user_id: int, platform: str, data: str):
+    # 🔴 ИСПРАВЛЕНО: ДОБАВИЛ data: str И ПРОВЕРКУ
+    if not user_id or not platform or not data:
         return
+
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute("""
@@ -31,6 +35,7 @@ def save_participant(user_id: int, platform: str,  str):
     """, (user_id, platform, data))
     conn.commit()
     conn.close()
+
 
 def get_all_participants():
     conn = sqlite3.connect(DB_PATH)
