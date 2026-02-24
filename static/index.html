@@ -1,24 +1,36 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
   <meta charset="utf-8">
-  <title>Анкета</title>
-  <!-- 🔴 ДОБАВЛЕНО: interactive-widget для iOS клавиатуры -->
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content">
-  <!-- 🔴 ОБНОВЛЕНО: VK Bridge latest версия -->
-  <script src="https://unpkg.com/@vkontakte/vk-bridge@latest/dist/vk-bridge.umd.js"></script>
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <title>Анкета «Между нами девочками»</title>
+
+  <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
+  <meta name="theme-color" content="#EDFD97">
+  <meta name="format-detection" content="telephone=no">
+
+  <script src="https://unpkg.com/@vkontakte/vk-bridge/dist/browser.min.js"></script>
+
+  <script>
+    if (window.vkBridge) {
+      vkBridge.send('VKWebAppInit')
+        .catch(err => console.error('VK Bridge ошибка:', err));
+    }
+  </script>
+
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
+
     html, body {
       font-family: sans-serif;
       background: #f9f9f9;
       overflow-x: hidden;
-      overflow-y: hidden;
+      overflow-y: auto;
       width: 100%;
       height: 100%;
-      position: fixed;
+      position: relative;
+      -webkit-overflow-scrolling: touch;
     }
+
     .screen {
       display: none;
       width: 100%;
@@ -28,9 +40,9 @@
       -webkit-overflow-scrolling: touch;
       padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom) 0;
     }
+
     .active { display: block; }
 
-    /* === 🔴 ФОН ПОД ИЛЛЮСТРАЦИИ (ПРОТИВ БЕЛОГО ПОДВАЛА) === */
     #welcome { background-color: #EDFD97; }
     #q1 { background-color: #FBC2D6; }
     #q2 { background-color: #D7C9F6; }
@@ -43,7 +55,6 @@
     #prefull { background-color: #EDFD97; }
     #result-screen { background-color: #EDFD97; }
 
-    /* === АДАПТИВНЫЕ КОНТЕЙНЕРЫ === */
     .quiz-container {
       position: relative;
       width: 100%;
@@ -73,9 +84,10 @@
       height: 100%;
       object-fit: contain;
       display: block;
+      pointer-events: none;
+      -webkit-user-drag: none;
     }
 
-    /* === 🔴 ШРИФТЫ (ОДИН ДЛЯ ВСЕХ УСТРОЙСТВ) === */
     @font-face {
       font-family: 'InputFont';
       src: url('static/fonts/Blogger_Sans-Light.otf') format('opentype');
@@ -87,17 +99,15 @@
       font-display: swap;
     }
 
-    /* === АДАПТИВНЫЕ ПОЗИЦИИ (1080×1920) === */
     .input-field {
       position: absolute;
       left: 16.2%;
       top: 38.8%;
       width: 69.4%;
-      height: 134px;
+      height: 130px;
       box-sizing: border-box;
-      padding: 0 10px 0 5px;
+      padding: 0px;
       font-family: 'InputFont', sans-serif;
-      font-style: normal;
       font-size: clamp(14px, 3.5vmin, 37px);
       line-height: 1.8;
       color: #555;
@@ -111,9 +121,18 @@
       z-index: 15;
       word-break: break-word;
       white-space: pre-wrap;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
+      -webkit-user-select: text;
+      user-select: text;
+      -webkit-touch-callout: default;
+      touch-action: manipulation;
+      cursor: text;
+      font-size: 16px;
+      caret-color: #000 !important;
+      -webkit-text-fill-color: #555;
+    }
+
+    .input-field:focus {
+      background: rgba(255, 255, 255, 0.1);
     }
 
     .char-counter {
@@ -124,9 +143,9 @@
       font-size: clamp(10px, 2vmin, 12px);
       color: rgba(51, 51, 51, 0.5);
       z-index: 16;
+      pointer-events: none;
     }
 
-    /* === 🔴 КНОПКИ — УВЕЛИЧЕННЫЙ ШРИФТ (КАК WELCOME/Q1) === */
     .action-btn {
       position: absolute;
       left: 4.2%;
@@ -138,7 +157,6 @@
       font-family: 'BloggerSans', sans-serif;
       font-size: clamp(20px, 5vw, 71px);
       cursor: pointer;
-      transition: all 0.15s ease;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -150,9 +168,16 @@
       box-shadow: 0 8px 8px rgba(0, 0, 0, 0.25);
       z-index: 20;
       touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-user-select: none;
+      user-select: none;
     }
 
-    /* 🔴 УБРАНО: .action-btn:active — теперь только JS анимация */
+    .action-btn.pressed {
+      transform: translateY(4px) scale(0.985);
+      opacity: 0.92;
+      box-shadow: 0 4px 4px rgba(0, 0, 0, 0.2);
+    }
 
     #welcome .action-btn { bottom: 7.0%; background: linear-gradient(135deg, #93AE00, #C7DD4C); color: #FFFFFF; }
     #q1 .action-btn { bottom: 7.0%; background: linear-gradient(135deg, #FD5DA2, #CD2F61); color: #FFFFFF; }
@@ -193,6 +218,12 @@
       padding: 0 20px;
     }
 
+    #prefull-btn.pressed {
+      transform: translateY(4px) scale(0.985);
+      opacity: 0.92;
+      box-shadow: 0 4px 4px rgba(0, 0, 0, 0.2);
+    }
+
     #result-img {
       width: 100%;
       height: 100%;
@@ -207,7 +238,7 @@
       aspect-ratio: 990 / 171;
       min-height: 50px;
       max-height: 171px;
-      bottom: 6.8%;
+      bottom: 10.9%;
       border-radius: 76px;
       font-family: 'BloggerSans', sans-serif;
       font-size: clamp(20px, 5vw, 71px);
@@ -224,9 +255,47 @@
       align-items: center;
       z-index: 30;
     }
+
+    #share-btn.pressed {
+      transform: translateY(4px) scale(0.985);
+      opacity: 0.92;
+      box-shadow: 0 4px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    #loading {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #EDFD97;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+    #loading.hidden {
+      display: none;
+    }
+    #loading .spinner {
+      width: 48px;
+      height: 48px;
+      border: 4px solid #93AE00;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
   </style>
 </head>
 <body>
+  <div id="loading">
+    <div class="spinner"></div>
+  </div>
+
   <div id="welcome" class="screen active">
     <div class="quiz-container">
       <img src="static/images/welcome.jpg" class="illustration">
@@ -237,8 +306,8 @@
   <div id="q1" class="screen">
     <div class="quiz-container">
       <img src="static/images/q1.jpg" class="illustration">
-      <div id="name" class="input-field" contenteditable="true"></div>
-      <div class="char-counter" id="name-counter">0/70</div>
+      <textarea id="name" class="input-field" maxlength="72"></textarea>
+      <div class="char-counter" id="name-counter">0/72</div>
       <button class="action-btn" id="q1-next">вперед</button>
     </div>
   </div>
@@ -246,8 +315,8 @@
   <div id="q2" class="screen">
     <div class="quiz-container">
       <img src="static/images/q2.jpg" class="illustration">
-      <div id="city" class="input-field" contenteditable="true"></div>
-      <div class="char-counter" id="city-counter">0/70</div>
+      <textarea id="city" class="input-field" maxlength="72"></textarea>
+      <div class="char-counter" id="city-counter">0/72</div>
       <button class="action-btn" id="q2-prev">назад</button>
       <button class="action-btn" id="q2-next">вперед</button>
     </div>
@@ -256,8 +325,8 @@
   <div id="q3" class="screen">
     <div class="quiz-container">
       <img src="static/images/q3.jpg" class="illustration">
-      <div id="dream" class="input-field" contenteditable="true"></div>
-      <div class="char-counter" id="dream-counter">0/70</div>
+      <textarea id="dream" class="input-field" maxlength="72"></textarea>
+      <div class="char-counter" id="dream-counter">0/72</div>
       <button class="action-btn" id="q3-prev">назад</button>
       <button class="action-btn" id="q3-next">вперед</button>
     </div>
@@ -266,8 +335,8 @@
   <div id="q4" class="screen">
     <div class="quiz-container">
       <img src="static/images/q4.jpg" class="illustration">
-      <div id="age" class="input-field" contenteditable="true"></div>
-      <div class="char-counter" id="age-counter">0/70</div>
+      <textarea id="age" class="input-field" maxlength="72"></textarea>
+      <div class="char-counter" id="age-counter">0/72</div>
       <button class="action-btn" id="q4-prev">назад</button>
       <button class="action-btn" id="q4-next">вперед</button>
     </div>
@@ -276,8 +345,8 @@
   <div id="q5" class="screen">
     <div class="quiz-container">
       <img src="static/images/q5.jpg" class="illustration">
-      <div id="hobby" class="input-field" contenteditable="true"></div>
-      <div class="char-counter" id="hobby-counter">0/70</div>
+      <textarea id="hobby" class="input-field" maxlength="72"></textarea>
+      <div class="char-counter" id="hobby-counter">0/72</div>
       <button class="action-btn" id="q5-prev">назад</button>
       <button class="action-btn" id="q5-next">вперед</button>
     </div>
@@ -286,8 +355,8 @@
   <div id="q6" class="screen">
     <div class="quiz-container">
       <img src="static/images/q6.jpg" class="illustration">
-      <div id="goal" class="input-field" contenteditable="true"></div>
-      <div class="char-counter" id="goal-counter">0/70</div>
+      <textarea id="goal" class="input-field" maxlength="72"></textarea>
+      <div class="char-counter" id="goal-counter">0/72</div>
       <button class="action-btn" id="q6-prev">назад</button>
       <button class="action-btn" id="q6-next">вперед</button>
     </div>
@@ -296,8 +365,8 @@
   <div id="q7" class="screen">
     <div class="quiz-container">
       <img src="static/images/q7.jpg" class="illustration">
-      <div id="quote" class="input-field" contenteditable="true"></div>
-      <div class="char-counter" id="quote-counter">0/70</div>
+      <textarea id="quote" class="input-field" maxlength="72"></textarea>
+      <div class="char-counter" id="quote-counter">0/72</div>
       <button class="action-btn" id="q7-prev">назад</button>
       <button class="action-btn" id="q7-next">вперед</button>
     </div>
@@ -306,8 +375,8 @@
   <div id="q8" class="screen">
     <div class="quiz-container">
       <img src="static/images/q8.jpg" class="illustration">
-      <div id="extra" class="input-field" contenteditable="true"></div>
-      <div class="char-counter" id="extra-counter">0/70</div>
+      <textarea id="extra" class="input-field" maxlength="72"></textarea>
+      <div class="char-counter" id="extra-counter">0/72</div>
       <button class="action-btn" id="q8-prev">назад</button>
       <button class="action-btn" id="q8-next">вперед</button>
     </div>
@@ -322,92 +391,99 @@
 
   <div id="result-screen" class="screen">
     <div class="result-container">
-      <img id="result-img">
+      <img id="result-img" src="" alt="Результат Анкеты">
       <button class="action-btn" id="share-btn">Поделиться с подружками!</button>
     </div>
   </div>
 
   <script>
-    let currentScreen = 'welcome';
     let userId = null;
     let platform = 'web';
     let resultPublicUrl = null;
-    const TELEGRAM_BOT_NAME = "Sloboda8Marta_bot";
-    const MAX_LEN = 70;
+    const MAX_LEN = 72;
     const MAX_LINES = 2;
-    const MAX_CHARS_LINE_1 = 33;
-    const MAX_CHARS_LINE_2_IF_30_PLUS = 40;
+    const MAX_CHARS_LINE_1 = 36;
+    const MAX_CHARS_LINE_2_IF_30_PLUS = 36;
+    const STORAGE_KEY = 'quiz_answers_v15';
 
     // =====================================================================
-    // 🔴 VK MINI APPS INIT (ПОЛНАЯ ЦЕПОЧКА ПО ТРЕБОВАНИЯМ VK)
+    // ЗАГРУЗКА TELEGRAM СКРИПТА
     // =====================================================================
-    if (window.location.search.includes('vk_app_id') && typeof vkBridge !== 'undefined') {
-      platform = 'vk';
-      console.log('🔵 VK режим обнаружен');
+    async function loadTelegramScript() {
+      if (window.Telegram) return true;
 
-      // ✅ Полная цепочка инициализации VK
-      vkBridge.send('VKWebAppInit')
-        .then(() => {
-          console.log('✅ VKWebAppInit успешен');
-          // Обновление конфига для корректной работы WebView
-          return vkBridge.send('VKWebAppUpdateConfig', {
-            scheme: 'client_light',
-            webview_type: 'auto'
-          });
-        })
-        .then(() => {
-          console.log('✅ VKWebAppUpdateConfig успешен');
-          // Настройки статус-бара
-          return vkBridge.send('VKWebAppSetViewSettings', {
-            status_bar_style: 'light',
-            action_bar_color: '#FBC2D6'
-          });
-        })
-        .then(() => {
-          console.log('✅ VKWebAppSetViewSettings успешен');
-          // Получение User ID
-          return vkBridge.send('VKWebAppGetUserInfo');
-        })
-        .then(data => {
-          userId = data.id;
-          console.log('✅ User ID:', userId);
-        })
-        .catch(err => {
-          console.warn('⚠️ VK Init ошибка (не критично):', err);
-          // Приложение продолжает работать даже если инициализация не удалась
-        });
-
-      // Подписка на изменения темы
-      vkBridge.subscribe('VKWebAppUpdateConfig', (data) => {
-        console.log('🎨 Тема изменилась:', data.scheme);
+      return new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = 'https://telegram.org/js/telegram-web-app.js';
+        script.onload = () => resolve(true);
+        script.onerror = () => reject(new Error('Telegram script failed'));
+        document.head.appendChild(script);
       });
-
-    } else if (window.Telegram?.WebApp) {
-      // =====================================================================
-      // 🔴 TELEGRAM INIT (С ЗАЩИТОЙ ОТ ОШИБОК)
-      // =====================================================================
-      platform = 'telegram';
-      console.log('🟢 Telegram режим обнаружен');
-
-      try {
-        Telegram.WebApp.ready();
-        Telegram.WebApp.expand();
-        const initData = Telegram.WebApp.initDataUnsafe;
-        userId = initData?.user?.id;
-        console.log('✅ Telegram User ID:', userId);
-      } catch (e) {
-        console.warn('⚠️ Telegram setup ошибка (не критично):', e);
-      }
-
-    } else {
-      console.log('⚪ Web режим (без платформы)');
     }
 
-    function getText(el) { return el?.innerText || ''; }
-    function setText(el, text) { if (el) el.innerText = text; }
-    function countLines(text) { return text.split('\n').length; }
+    // =====================================================================
+    // ИНИЦИАЛИЗАЦИЯ ПЛАТФОРМЫ
+    // =====================================================================
+    async function initPlatform() {
+      const loading = document.getElementById('loading');
 
-    const STORAGE_KEY = 'quiz_answers_v15';
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const vkAppId = urlParams.get('vk_app_id');
+
+        if (vkAppId) {
+          platform = 'vk';
+          userId = urlParams.get('vk_user_id');
+
+          if (window.vkBridge) {
+            vkBridge.send('VKWebAppSetViewSettings', {
+              status_bar_style: 'light',
+              action_bar_color: '#EDFD97'
+            });
+
+            vkBridge.subscribe('VKWebAppBackButton', () => {
+              const welcome = document.getElementById('welcome');
+              if (welcome.classList.contains('active')) {
+                vkBridge.send('VKWebAppExitApp');
+              } else {
+                show('welcome');
+              }
+            });
+          }
+
+          if (loading) loading.classList.add('hidden');
+          return;
+        }
+
+        const isTelegram = window.Telegram?.WebApp ||
+                          (window.location.hash.includes('tgWebAppData')) ||
+                          navigator.userAgent.includes('Telegram');
+
+        if (isTelegram) {
+          try {
+            await loadTelegramScript();
+
+            Telegram.WebApp.ready();
+            Telegram.WebApp.expand();
+            userId = Telegram.WebApp.initDataUnsafe?.user?.id;
+            platform = 'telegram';
+
+            if (loading) loading.classList.add('hidden');
+            return;
+          } catch (e) {
+            // Telegram не доступен
+          }
+        }
+      } catch (e) {
+        // Ошибка инициализации
+      } finally {
+        if (loading) loading.classList.add('hidden');
+      }
+    }
+
+    // =====================================================================
+    // СОХРАНЕНИЕ ОТВЕТОВ
+    // =====================================================================
     function saveAnswer(field, value) {
       const current = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
       current[field] = value;
@@ -420,7 +496,7 @@
         const el = document.getElementById(id);
         const counter = document.getElementById(`${id}-counter`);
         if (el && saved[id]) {
-          setText(el, saved[id]);
+          el.value = saved[id];
           counter.textContent = `${saved[id].length}/${MAX_LEN}`;
         }
       });
@@ -431,40 +507,20 @@
     }
 
     // =====================================================================
-    // 🔴 ENTER РАБОТАЕТ ОДИН РАЗ (СТРОКА 1 → 2)
+    // 🔴 ОГРАНИЧЕНИЕ ВВОДА + БЛОКИРОВКА ENTER
     // =====================================================================
-    function setupInputLimit(div, counterId, maxLen = MAX_LEN) {
-      div.addEventListener('keydown', (e) => {
-        const isSpecialKey = ['Backspace','Delete','ArrowLeft','ArrowRight',
-          'ArrowUp','ArrowDown','Tab','Escape',
-          'Control','Meta','Alt'].includes(e.key);
-
-        if (isSpecialKey) return;
-
-        const text = getText(div);
-        const lines = countLines(text);
-        const currentLineIndex = lines.length - 1;
-
+    function setupInputLimit(input, counterId, maxLen = MAX_LEN) {
+      // 🔴 БЛОКИРОВКА ENTER — не даём создать новую строку
+      input.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
-          if (lines >= MAX_LINES) {
-            e.preventDefault();
-            return false;
-          }
-          if (currentLineIndex === 0) {
-            return;
-          }
-          e.preventDefault();
-          return false;
-        }
-
-        if (text.length >= maxLen) {
           e.preventDefault();
           return false;
         }
       });
 
-      div.addEventListener('input', () => {
-        const text = getText(div);
+      // Обработка ввода текста
+      input.addEventListener('input', () => {
+        let text = input.value;
         const counter = document.getElementById(counterId);
         const lines = text.split('\n');
 
@@ -481,29 +537,28 @@
         }
 
         if (lines.length > MAX_LINES) {
-          const trimmed = lines.slice(0, MAX_LINES).join('\n');
-          setText(div, trimmed);
-          if (counter) counter.textContent = `${trimmed.length}/${MAX_LEN}`;
-          saveAnswer(div.id, trimmed);
+          text = lines.slice(0, MAX_LINES).join('\n');
+          input.value = text;
+          if (counter) counter.textContent = `${text.length}/${MAX_LEN}`;
+          saveAnswer(input.id, text);
           return;
         }
 
-        const joinedText = lines.join('\n');
-        if (joinedText.length > maxLen) {
-          const trimmed = joinedText.slice(0, maxLen);
-          setText(div, trimmed);
-          if (counter) counter.textContent = `${maxLen}/${maxLen}`;
-          saveAnswer(div.id, trimmed);
+        if (text.length > maxLen) {
+          text = text.slice(0, maxLen);
+          input.value = text;
+          if (counter) counter.textContent = `${maxLen}/${MAX_LEN}`;
+          saveAnswer(input.id, text);
           return;
         }
 
         if (counter) counter.textContent = `${text.length}/${MAX_LEN}`;
-        saveAnswer(div.id, text);
+        saveAnswer(input.id, text);
       });
     }
 
     // =====================================================================
-    // 🔴 АДАПТАЦИЯ ШРИФТА ОТ ГРАНИЦ ЯЧЕЙКИ
+    // АДАПТАЦИЯ ШРИФТОВ
     // =====================================================================
     function updateInputFontSizes() {
       const containers = document.querySelectorAll('.quiz-container, .prefull-container, .result-container');
@@ -518,10 +573,7 @@
           const newSize = baseSize * scaleFactor;
           const finalSize = Math.max(14, Math.min(37, newSize));
           field.style.fontSize = `${finalSize}px`;
-
-          const finalLineHeight = 1.8;
-          field.style.lineHeight = `${finalLineHeight}`;
-
+          field.style.lineHeight = '1.8';
           const paddingTop = 5 * scaleFactor;
           field.style.paddingTop = `${paddingTop}px`;
         });
@@ -545,11 +597,144 @@
     function show(screenId) {
       document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
       document.getElementById(screenId).classList.add('active');
-      currentScreen = screenId;
       setTimeout(updateInputFontSizes, 50);
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
+    // =====================================================================
+    // ОБРАБОТКА КНОПОК
+    // =====================================================================
+    function setupButton(id, onClick) {
+      const btn = document.getElementById(id);
+      if (!btn) return;
+
+      const press = (e) => {
+        e?.preventDefault();
+        btn.classList.add('pressed');
+      };
+      const release = (e) => {
+        e?.preventDefault();
+        btn.classList.remove('pressed');
+        onClick();
+      };
+
+      btn.addEventListener('touchstart', press, { passive: false });
+      btn.addEventListener('touchend', release, { passive: false });
+      btn.addEventListener('touchcancel', () => btn.classList.remove('pressed'));
+
+      btn.addEventListener('mousedown', press);
+      btn.addEventListener('mouseup', release);
+      btn.addEventListener('mouseleave', () => btn.classList.remove('pressed'));
+    }
+
+    // =====================================================================
+    // 🔴 SHARE — ЕДИНАЯ МЕХАНИКА ДЛЯ ВСЕХ ПЛАТФОРМ
+    // =====================================================================
+    function shareResult() {
+      if (!resultPublicUrl) {
+        alert('Сначала сгенерируйте результат!');
+        return;
+      }
+
+      const previewUrl = window.location.origin + '/preview' + resultPublicUrl.replace('/r/', '/');
+
+      const vkMiniAppUrl = 'https://vk.com/app54460400';
+      const telegramBotUrl = 'https://t.me/Sloboda8Marta_bot';
+
+      const shareText = `Привет, подружка 🌸 Моя анкета с ответами уже готова!
+Заполняй свою в ${platform === 'vk' ? vkMiniAppUrl : telegramBotUrl} и передавай подругам 💫
+Подписывайся на https://t.me/sloboda_russia и участвуй в розыгрыше призов! 💝`;
+
+      try {
+        // TELEGRAM — нативный share
+        if (platform === 'telegram') {
+          Telegram.WebApp.openTelegramLink(
+            `https://t.me/share/url?url=${encodeURIComponent(previewUrl)}&text=${encodeURIComponent(shareText)}`
+          );
+        }
+        // VK — ВСЕ ПЛАТФОРМЫ через vk.com/share.php (работает без модерации)
+        else if (platform === 'vk') {
+          const shareUrl = `https://vk.com/share.php?url=${encodeURIComponent(previewUrl)}&title=${encodeURIComponent(shareText)}`;
+
+          // Desktop — новое окно popup
+          if (window.innerWidth >= 1024) {
+            window.open(shareUrl, '_blank', 'width=600,height=400');
+          }
+          // Mobile (iOS + Android) — переход в том же окне
+          else {
+            window.location.href = shareUrl;
+          }
+        }
+        // Web / другие — тихое копирование
+        else {
+          fallbackShare(previewUrl, shareText);
+        }
+      } catch (e) {
+        fallbackShare(previewUrl, shareText);
+      }
+    }
+
+    // =====================================================================
+    // FALLBACK — ТИХОЕ КОПИРОВАНИЕ
+    // =====================================================================
+    function fallbackShare(url, text) {
+      const fullText = `${text}\n\n${url}`;
+
+      const textarea = document.createElement('textarea');
+      textarea.value = fullText;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+
+      try {
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+        // Тихое копирование — без уведомлений
+      } catch (err) {
+        document.body.removeChild(textarea);
+        prompt('Скопируй ссылку:', fullText);
+      }
+    }
+
+    // =====================================================================
+    // ГЕНЕРАЦИЯ РЕЗУЛЬТАТА
+    // =====================================================================
+    async function submitForm() {
+      const btn = document.getElementById('prefull-btn');
+      if (!btn) return;
+      const originalText = btn.textContent.trim();
+      btn.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;width:100%;height:100%"><span>${originalText}</span><span style="display:inline-block;width:48px;height:48px;border:4px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;margin-left:26px"></span></div>`;
+      btn.style.pointerEvents = 'none';
+
+      const answers = {};
+      ['name','city','dream','age','hobby','goal','quote','extra'].forEach(id => {
+        answers[id] = document.getElementById(id).value || '';
+      });
+
+      try {
+        const res = await fetch(window.location.origin + '/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user_id: userId, platform, answers })
+        });
+        if (!res.ok) throw new Error('Server error');
+        const blob = await res.blob();
+        document.getElementById('result-img').src = URL.createObjectURL(blob);
+        resultPublicUrl = res.headers.get('x-result-url');
+        show('result-screen');
+        clearAnswers();
+      } catch (e) {
+        alert("Не удалось сгенерировать результат. Попробуйте снова.");
+        btn.innerHTML = originalText;
+        btn.style.pointerEvents = 'auto';
+      }
+    }
+
+    // =====================================================================
+    // ИНИЦИАЛИЗАЦИЯ
+    // =====================================================================
+    window.addEventListener('DOMContentLoaded', async () => {
+      await initPlatform();
       loadAnswers();
 
       ['name','city','dream','age','hobby','goal','quote','extra'].forEach(id => {
@@ -560,24 +745,24 @@
       setTimeout(updateInputFontSizes, 150);
       window.addEventListener('resize', updateInputFontSizes);
 
-      document.getElementById('start-btn').onclick = () => show('q1');
-      document.getElementById('q1-next').onclick = () => show('q2');
-      document.getElementById('q2-prev').onclick = () => show('q1');
-      document.getElementById('q2-next').onclick = () => show('q3');
-      document.getElementById('q3-prev').onclick = () => show('q2');
-      document.getElementById('q3-next').onclick = () => show('q4');
-      document.getElementById('q4-prev').onclick = () => show('q3');
-      document.getElementById('q4-next').onclick = () => show('q5');
-      document.getElementById('q5-prev').onclick = () => show('q4');
-      document.getElementById('q5-next').onclick = () => show('q6');
-      document.getElementById('q6-prev').onclick = () => show('q5');
-      document.getElementById('q6-next').onclick = () => show('q7');
-      document.getElementById('q7-prev').onclick = () => show('q6');
-      document.getElementById('q7-next').onclick = () => show('q8');
-      document.getElementById('q8-prev').onclick = () => show('q7');
-      document.getElementById('q8-next').onclick = () => show('prefull');
-      document.getElementById('prefull-btn').onclick = () => submitForm();
-      document.getElementById('share-btn').onclick = () => shareResult();
+      setupButton('start-btn', () => show('q1'));
+      setupButton('q1-next', () => show('q2'));
+      setupButton('q2-prev', () => show('q1'));
+      setupButton('q2-next', () => show('q3'));
+      setupButton('q3-prev', () => show('q2'));
+      setupButton('q3-next', () => show('q4'));
+      setupButton('q4-prev', () => show('q3'));
+      setupButton('q4-next', () => show('q5'));
+      setupButton('q5-prev', () => show('q4'));
+      setupButton('q5-next', () => show('q6'));
+      setupButton('q6-prev', () => show('q5'));
+      setupButton('q6-next', () => show('q7'));
+      setupButton('q7-prev', () => show('q6'));
+      setupButton('q7-next', () => show('q8'));
+      setupButton('q8-prev', () => show('q7'));
+      setupButton('q8-next', () => show('prefull'));
+      setupButton('prefull-btn', submitForm);
+      setupButton('share-btn', shareResult);
 
       if (platform === 'telegram' && window.Telegram?.WebApp) {
         setTimeout(() => Telegram.WebApp.expand(), 300);
@@ -585,99 +770,6 @@
 
       show('welcome');
     });
-
-    async function submitForm() {
-      const btn = document.getElementById('prefull-btn');
-      if (!btn) return;
-      const originalText = btn.textContent.trim();
-      btn.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;width:100%;height:100%"><span>${originalText}</span><span style="display:inline-block;width:48px;height:48px;border:4px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;margin-left:26px"></span></div>`;
-      btn.style.pointerEvents = 'none';
-
-      try {
-        const answers = {
-          name: getText(document.getElementById('name')) || '',
-          city: getText(document.getElementById('city')) || '',
-          dream: getText(document.getElementById('dream')) || '',
-          age: getText(document.getElementById('age')) || '',
-          hobby: getText(document.getElementById('hobby')) || '',
-          goal: getText(document.getElementById('goal')) || '',
-          quote: getText(document.getElementById('quote')) || '',
-          extra: getText(document.getElementById('extra')) || ''
-        };
-
-        const res = await fetch('generate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ user_id: userId, platform, answers })
-        });
-
-        if (!res.ok) throw new Error('Server error');
-
-        const blob = await res.blob();
-        const url = URL.createObjectURL(blob);
-        document.getElementById('result-img').src = url;
-
-        resultPublicUrl = res.headers.get('x-result-url') || res.headers.get('X-Result-URL');
-
-        show('result-screen');
-        clearAnswers();
-      } catch (e) {
-        console.error("Ошибка:", e);
-        alert("Не удалось сгенерировать результат. Попробуйте снова.");
-        btn.innerHTML = originalText;
-        btn.style.pointerEvents = 'auto';
-      }
-    }
-
-    function shareResult() {
-      if (platform === 'telegram') {
-        Telegram.WebApp.showAlert(
-          "Результат уже в чате с ботом! Поделись с подружками и участвуй в розыгрыше призов!"
-        );
-      } else if (platform === 'vk') {
-        const imageUrl = resultPublicUrl
-          ? window.location.origin + '/' + resultPublicUrl
-          : document.getElementById('result-img').src;
-
-        const message = "Заполни анкету и участвуй в конкурсе!\nПройти прямо сейчас 👇\nhttps://vk.com/app54435997";
-
-        vkBridge.send('VKWebAppShowWallPostBox', {
-          message,
-          attachments: imageUrl
-        }).catch(console.error);
-      }
-    }
-
-    // =====================================================================
-    // 🔴 ИСПРАВЛЕНО: АНИМАЦИЯ ТОЛЬКО НАЖАТОЙ КНОПКИ (ИЗОЛИРОВАННАЯ)
-    // =====================================================================
-    document.querySelectorAll('.action-btn').forEach(btn => {
-      const animateStart = () => {
-        btn.style.transform = 'translateY(4px) scale(0.985)';
-        btn.style.opacity = '0.92';
-        btn.style.boxShadow = '0 4px 4px rgba(0, 0, 0, 0.2)';
-      };
-
-      const animateEnd = () => {
-        btn.style.transform = '';
-        btn.style.opacity = '';
-        btn.style.boxShadow = '';
-      };
-
-      // Мобильные (touch)
-      btn.addEventListener('touchstart', animateStart, { passive: true });
-      btn.addEventListener('touchend', animateEnd, { passive: true });
-      btn.addEventListener('touchcancel', animateEnd, { passive: true });
-
-      // Десктоп (mouse)
-      btn.addEventListener('mousedown', animateStart);
-      btn.addEventListener('mouseup', animateEnd);
-      btn.addEventListener('mouseleave', animateEnd);
-    });
-
-    const style = document.createElement('style');
-    style.textContent = `@keyframes spin { to { transform: rotate(360deg); } }`;
-    document.head.appendChild(style);
   </script>
 </body>
 </html>
