@@ -43,16 +43,16 @@ app.add_middleware(
 
 
 # =============================================================================
-# 🔴 IFRAME HEADERS ДЛЯ VK
+# 🔴 IFRAME HEADERS ДЛЯ VK (ФИКС 1 — CSP)
 # =============================================================================
 @app.middleware("http")
 async def add_frame_headers(request, call_next):
     response = await call_next(request)
     response.headers["X-Frame-Options"] = "ALLOWALL"
-    response.headers["Content-Security-Policy"] = "frame-ancestors https://vk.com https://*.vk.com *"
+    # 🔴 ФИКС 1 — РАСШИРЕННЫЙ CSP ДЛЯ VK DESKTOP
+    response.headers["Content-Security-Policy"] = "frame-ancestors https://vk.com https://*.vk.com https://*.userapi.com https://*.vkuserapi.net *"
     response.headers["Access-Control-Allow-Origin"] = "*"
     return response
-
 
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
@@ -129,10 +129,6 @@ async def generate_result(request: Request):
         if platform not in ["vk", "telegram", "web"]:
             platform = "web"
 
-        # Сохранение в БД
-        safe_user_id = user_id if user_id else "anonymous"
-        save_participant(safe_user_id, platform, json.dumps(answers, ensure_ascii=False))
-
         # Генерация изображения
         template_img = Image.open(TEMPLATE_PATH).convert("RGB")
         template_draw = ImageDraw.Draw(template_img)
@@ -158,6 +154,10 @@ async def generate_result(request: Request):
         template_img.save(filepath, 'JPEG', quality=95)
 
         public_url = f"/r/{short_id}"
+
+        # 🔴 ИСПРАВЛЕНИЕ 1 — ДОБАВЛЕН 4-й ПАРАМЕТР (public_url):
+        safe_user_id = user_id if user_id else "anonymous"
+        save_participant(safe_user_id, platform, json.dumps(answers, ensure_ascii=False), public_url)
 
         # Возврат изображения
         img_io = io.BytesIO()
@@ -189,25 +189,33 @@ async def preview_result(short_id: str):
         if not os.path.exists(filepath):
             return JSONResponse(status_code=404, content={"error": "Result not found"})
 
+        # 🔴 ИСПРАВЛЕНО: убраны пробелы в конце URL
         site_url = os.getenv("SITE_URL", "https://sloboda8marta.ru")
         image_url = f"{site_url}/r/{short_id}"
 
+        # 🔴 ТОЛЬКО ЗАГОЛОВОК И КАРТИНКА (текст в message — не дублируем)
+        og_title = "Результат анкеты"
+
+        # 🔴 OG TAGS — ЭТО ПОПАДЁТ В VK SHARE:
         html_content = f"""
 <!DOCTYPE html>
 <html lang="ru">
 <head>
   <meta charset="utf-8">
-  <title>Моя анкета — Между нами девочками</title>
+  <title>{og_title}</title>
 
-  <meta property="og:type" content="image">
-  <meta property="og:title" content="Моя анкета — Между нами девочками 🌸">
-  <meta property="og:description" content="Заполни анкету и участвуй в розыгрыше призов!">
+  <!-- 🔴 OG TAGS ДЛЯ VK SHARE -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="{og_title}">
   <meta property="og:image" content="{image_url}">
   <meta property="og:image:width" content="1080">
   <meta property="og:image:height" content="4830">
   <meta property="og:url" content="{image_url}">
+  <meta property="og:site_name" content="Между нами девочками">
 
-  <meta name="twitter:card" content="photo">
+  <!-- Twitter Cards -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="{og_title}">
   <meta name="twitter:image" content="{image_url}">
 
   <meta http-equiv="refresh" content="1;url={image_url}">
@@ -221,7 +229,7 @@ async def preview_result(short_id: str):
 <body>
   <div class="loading">
     <p>🌸 Загрузка анкеты...</p>
-    <img src="{image_url}" alt="Моя анкета">
+    <img src="{image_url}" alt="Результат анкеты">
     <p><small>Если не загрузилось, <a href="{image_url}">нажми сюда</a></small></p>
   </div>
 </body>
@@ -301,20 +309,24 @@ def disk_usage(password: str = Query(...)):
 
 @app.get("/admin/export")
 def export_csv(password: str = Query(...)):
-    """Экспорт участников в CSV."""
+    """Экспорт участников в CSV — ПО ЯЧЕЙКАМ."""
     if password != "radar1786":
         return {"error": "Access denied"}
 
     participants = get_all_participants()
     output = io.StringIO()
-    writer = csv.writer(output)
-    writer.writerow(["ID", "User ID", "Platform", "Data", "Completed At"])
+    # 🔴 ДОБАВЛЕНО: delimiter=';' для Excel
+    writer = csv.writer(output, delimiter=';', lineterminator='\r\n')
+    # 🔴 ИСПРАВЛЕНО: BOM отдельно в начало файла
+    output.write('\ufeff')
+    writer.writerow(["ID", "User ID", "Platform", "Result URL", "Completed At"])
     for row in participants:
         writer.writerow(row)
     output.seek(0)
 
     return StreamingResponse(
-        iter([output.getvalue()]),
-        media_type="text/csv",
+        # 🔴 ДОБАВЛЕНО: .encode('utf-8-sig')
+        iter([output.getvalue().encode('utf-8-sig')]),
+        media_type="text/csv; charset=utf-8-sig",
         headers={"Content-Disposition": "attachment; filename=participants.csv"}
     )
