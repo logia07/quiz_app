@@ -14,7 +14,7 @@ from datetime import datetime, timedelta
 # =============================================================================
 # 🔴 КОНФИГУРАЦИЯ
 # =============================================================================
-VK_APP_ID = "54460400"
+VK_APP_ID = ""
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 STATIC_DIR = os.path.join(BASE_DIR, "static")
