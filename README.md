@@ -22,5 +22,4 @@
    git clone https://github.com/Logia07/quiz_app.git
    cd quiz_app
 
-   <img width="1080" height="1920" alt="начало" src="https://github.com/user-attachments/assets/329e4fae-b756-49db-9f60-5071aea72a8b" />
-   <img width="1080" height="1920" alt="вопрос 1" src="https://github.com/user-attachments/assets/f73ab63d-6a30-4c30-ab48-89918f23160f" />
+
